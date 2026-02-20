@@ -655,7 +655,6 @@ async function sendEmail({ config, callSid, fromNumber, duration, transcript, su
   const callerNumber = formatPhoneNumber(fromNumber);
 
   // Build descriptive filename: YYYY-MM-DD_HHMM_CallerName_PhoneNumber.mp3
-  const dateStr = timestamp.toLocaleDateString('en-CA'); // YYYY-MM-DD format
   const timeStr = timestamp.toLocaleTimeString('en-US', {
     hour12: false,
     hour: '2-digit',
