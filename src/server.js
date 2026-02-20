@@ -31,14 +31,14 @@ const { createPlainTextEmail, createHtmlEmail } = require('./email-templates');
 const clientConfig = loadClient(process.env.CLIENT_ID || 'rake-clover');
 const promptEngine = new PromptEngine(clientConfig);
 
-// Build runtime config
+// Build runtime config - MATCH WORKING DEV VERSION
 const config = {
   ...clientConfig,
   business: clientConfig.business,
   assistant: clientConfig.assistant,
   openai: {
-    model: 'gpt-4o-realtime-preview-2024-10-01',
-    voice: clientConfig.assistant.voice || 'alloy'
+    model: 'gpt-4o-realtime-preview-2024-12-17',  // Updated to match working version
+    voice: 'marin'  // Working voice from dev
   },
   email: clientConfig.email,
   callHandling: clientConfig.callHandling || { maxDuration: 600, voicemailAfter: 300 }
@@ -260,6 +260,11 @@ app.ws('/media-stream', (ws) => {
       try {
         const response = JSON.parse(data);
         
+        // Log all response types for debugging
+        if (response.type !== 'response.audio.delta') {
+          console.log('📨 OpenAI:', response.type);
+        }
+        
         if (response.type === 'response.audio.delta' && response.delta) {
           ws.send(JSON.stringify({
             event: 'media',
@@ -269,10 +274,10 @@ app.ws('/media-stream', (ws) => {
         }
         
         if (response.type === 'error') {
-          console.error('❌ OpenAI Error:', response.error);
+          console.error('❌ OpenAI Error:', JSON.stringify(response.error, null, 2));
         }
       } catch (error) {
-        console.error('Error:', error.message);
+        console.error('Error parsing OpenAI message:', error.message);
       }
     });
     
