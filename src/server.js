@@ -226,9 +226,9 @@ app.ws('/media-stream', (ws) => {
         session: {
           turn_detection: { 
             type: 'server_vad',
-            threshold: 0.75,
-            prefix_padding_ms: 400,
-            silence_duration_ms: 1500
+            threshold: 0.60,
+            prefix_padding_ms: 300,
+            silence_duration_ms: 800
           },
           input_audio_format: 'g711_ulaw',
           output_audio_format: 'g711_ulaw',

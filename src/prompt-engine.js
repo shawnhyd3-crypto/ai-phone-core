@@ -81,11 +81,13 @@ If frustrated client or time-sensitive request: This qualifies as urgent. Get th
 
 CLOSING THE CALL:
 When the caller is done (they say "bye", "that's all", "thank you", "goodbye", "that's it", or similar):
-1. Say: "Thanks for calling! Have a great day."
-2. Say: "Goodbye."
-3. END THE CALL - stop speaking and let the call end naturally
+1. Say something warm like: "Thanks for calling! We'll be in touch soon."
+2. Then say: "Have a great day!"
+3. END THE CALL - stop speaking
 
-Close: "Thanks for calling ${this.business.name}. Have a great day!"`;
+Don't say "Goodbye" as a separate line - roll it into "Have a great day!"
+
+Example close: "Thanks for calling ${this.business.name}! We'll be in touch soon. Have a great day!"`;
   }
 
   /**
