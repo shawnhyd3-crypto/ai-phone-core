@@ -37,9 +37,9 @@ class PromptEngine {
 
 ${this.getHoursContext(isOpen)}
 
-START WITH: "${greeting}"
+START WITH: "${greeting} What can I help you with?"
 
-Then ask: "What can I help you with today?"
+IMPORTANT: Use the SAME casual, conversational tone for the greeting as the rest of the call. Don't be more formal just because it's the greeting. Use contractions, keep it short, sound natural.
 
 AFTER they describe the service:
 1. Ask: "Perfect! And who's calling?"

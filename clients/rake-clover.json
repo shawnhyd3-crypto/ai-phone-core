@@ -14,11 +14,11 @@
   },
   "greetings": {
     "variations": [
-      "Thanks for calling Rake and Clover Landscaping! This is Sarah. How can I help?",
-      "Good morning! Rake and Clover Landscaping. I'm Sarah. What can I do for you?",
-      "Hi! You've reached Rake and Clover. This is Sarah. How can I help today?",
-      "Rake and Clover Landscaping, this is Sarah. What can I help you with?",
-      "Hey there! Sarah from Rake and Clover. What can I do for you today?"
+      "Hey! Thanks for calling. This is Sarah.",
+      "Hi there! Sarah here.",
+      "Hey! You've reached Rake and Clover. It's Sarah.",
+      "Hi! This is Sarah.",
+      "Hey there! Sarah speaking."
     ]
   },
   "services": [

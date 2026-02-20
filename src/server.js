@@ -322,12 +322,12 @@ app.ws('/media-stream', (ws) => {
     openAiWs.on('message', (data) => {
       try {
         const response = JSON.parse(data);
-        
+
         // Log all response types for debugging
         if (response.type !== 'response.audio.delta') {
           console.log('📨 OpenAI:', response.type);
         }
-        
+
         if (response.type === 'response.audio.delta' && response.delta) {
           ws.send(JSON.stringify({
             event: 'media',
@@ -335,7 +335,33 @@ app.ws('/media-stream', (ws) => {
             media: { payload: response.delta }
           }));
         }
-        
+
+        // Detect when AI finishes speaking a goodbye - then hang up
+        if (response.type === 'response.done') {
+          const responseText = response.response?.output?.[0]?.content?.[0]?.text || '';
+          const lowerText = responseText.toLowerCase();
+
+          // Check if this was a goodbye response
+          if (lowerText.includes('have a good day') ||
+              lowerText.includes('have a great day') ||
+              lowerText.includes('bye now') ||
+              lowerText.includes('thanks for calling')) {
+
+            console.log('👋 AI said goodbye - hanging up in 2 seconds');
+
+            // Wait for audio to finish, then hang up
+            setTimeout(async () => {
+              if (openAiWs) openAiWs.close();
+              ws.close();
+
+              if (callSid) {
+                console.log(`📞 Hanging up call ${callSid}`);
+                await hangupCall(callSid);
+              }
+            }, 2000);
+          }
+        }
+
         if (response.type === 'error') {
           console.error('❌ OpenAI Error:', JSON.stringify(response.error, null, 2));
         }
