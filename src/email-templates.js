@@ -25,6 +25,66 @@ function extractAddress(transcript) {
 }
 
 /**
+ * Extract caller name from transcript (same logic as utils.js)
+ */
+function extractNameFromTranscript(transcript, assistantName = 'Sarah') {
+  if (!transcript) return 'Unknown';
+  
+  // Common names to exclude (the assistant, common words)
+  const excludedNames = [
+    assistantName.toLowerCase(),
+    'the', 'a', 'an', 'calling', 'from', 'this', 'that', 'there', 'here',
+    'yes', 'yeah', 'sure', 'okay', 'ok', 'hi', 'hello', 'hey', 'thanks'
+  ];
+  
+  // Look for "my name is X" patterns
+  const namePatterns = [
+    /my name is (\w+)/i,
+    /call me (\w+)/i
+  ];
+  
+  for (const pattern of namePatterns) {
+    const match = transcript.match(pattern);
+    if (match) {
+      const name = match[1];
+      if (name && name.length > 1 && !excludedNames.includes(name.toLowerCase())) {
+        return name.charAt(0).toUpperCase() + name.slice(1);
+      }
+    }
+  }
+  
+  // Look for patterns after assistant asks "who's calling"
+  const responsePatterns = [
+    /who['']?s calling\??\s*(?:\[.*?\]\s*)?(\w+)/i,
+    /who do i have.*?\s*(?:\[.*?\]\s*)?(\w+)/i,
+    /and who['']?s (?:this|calling)\??\s*(?:\[.*?\]\s*)?(\w+)/i
+  ];
+  
+  for (const pattern of responsePatterns) {
+    const match = transcript.match(pattern);
+    if (match) {
+      const name = match[1];
+      if (name && name.length > 1 && !excludedNames.includes(name.toLowerCase())) {
+        return name.charAt(0).toUpperCase() + name.slice(1);
+      }
+    }
+  }
+  
+  // Look for "this is X" but filter out assistant
+  const thisIsMatch = transcript.match(/this is (\w+)/gi);
+  if (thisIsMatch) {
+    for (const match of thisIsMatch) {
+      const name = match.replace(/this is /i, '');
+      if (name && name.length > 1 && !excludedNames.includes(name.toLowerCase())) {
+        return name.charAt(0).toUpperCase() + name.slice(1);
+      }
+    }
+  }
+  
+  return 'Unknown';
+}
+
+/**
  * Create Google Maps static image URL
  */
 function getMapImageUrl(address, apiKey) {
@@ -47,6 +107,10 @@ function getMapImageUrl(address, apiKey) {
  * Create plain text email body
  */
 function createPlainTextEmail({ config, callerName, callerNumber, formattedDuration, intent, summary, transcript, timestamp }) {
+  // Extract name from transcript if not provided, filtering out assistant name
+  const extractedName = extractNameFromTranscript(transcript, config.assistant?.name || 'Sarah');
+  const finalCallerName = (callerName && callerName !== 'Unknown') ? callerName : extractedName;
+  
   const address = extractAddress(transcript);
   const mapLink = address ? `\nADDRESS\n-------\n${address}\nView on map: https://maps.google.com/maps?q=${encodeURIComponent(address)}\n` : '';
   
@@ -54,7 +118,7 @@ function createPlainTextEmail({ config, callerName, callerNumber, formattedDurat
 New Call Summary - ${config.business.name}
 ================================
 
-CALLER: ${callerName}
+CALLER: ${finalCallerName}
 PHONE: ${callerNumber}
 DURATION: ${formattedDuration}
 INTENT: ${intent}
@@ -77,6 +141,10 @@ Powered by Hyde Tech AI Phone Agent
  * Create HTML email body
  */
 function createHtmlEmail({ config, callerName, callerNumber, formattedDuration, intent, summary, transcript, timestamp }) {
+  // Extract name from transcript if not provided, filtering out assistant name
+  const extractedName = extractNameFromTranscript(transcript, config.assistant?.name || 'Sarah');
+  const finalCallerName = (callerName && callerName !== 'Unknown') ? callerName : extractedName;
+  
   const formattedTime = timestamp.toLocaleString('en-US', { 
     timeZone: 'America/Toronto',
     weekday: 'short',
@@ -145,7 +213,7 @@ function createHtmlEmail({ config, callerName, callerNumber, formattedDuration, 
     <div class="meta">
       <div class="meta-item">
         <div class="meta-label">Caller</div>
-        <div class="meta-value">${callerName}</div>
+        <div class="meta-value">${finalCallerName}</div>
       </div>
       <div class="meta-item">
         <div class="meta-label">Phone</div>

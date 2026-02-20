@@ -42,14 +42,19 @@ function extractIntentAndCategory(transcript) {
 /**
  * Extract caller name from transcript using simple heuristics
  */
-function extractName(transcript) {
+function extractName(transcript, assistantName = 'Sarah') {
   if (!transcript) return 'Unknown';
   
-  // Look for "my name is X" or "this is X" patterns
+  // Common names to exclude (the assistant, common words)
+  const excludedNames = [
+    assistantName.toLowerCase(),
+    'the', 'a', 'an', 'calling', 'from', 'this', 'that', 'there', 'here',
+    'yes', 'yeah', 'sure', 'okay', 'ok', 'hi', 'hello', 'hey', 'thanks'
+  ];
+  
+  // Look for "my name is X" patterns
   const namePatterns = [
     /my name is (\w+)/i,
-    /this is (\w+)/i,
-    /i'm (\w+)/i,
     /call me (\w+)/i
   ];
   
@@ -57,8 +62,35 @@ function extractName(transcript) {
     const match = transcript.match(pattern);
     if (match) {
       const name = match[1];
-      // Filter out common non-names
-      if (!['the', 'a', 'an', 'calling', 'from'].includes(name.toLowerCase())) {
+      if (name && name.length > 1 && !excludedNames.includes(name.toLowerCase())) {
+        return name.charAt(0).toUpperCase() + name.slice(1);
+      }
+    }
+  }
+  
+  // Look for patterns after Sarah asks "who's calling" or "who do I have"
+  const responsePatterns = [
+    /who['']?s calling\??\s*(?:\[.*?\]\s*)?(\w+)/i,
+    /who do i have.*?\s*(?:\[.*?\]\s*)?(\w+)/i,
+    /and who['']?s (?:this|calling)\??\s*(?:\[.*?\]\s*)?(\w+)/i
+  ];
+  
+  for (const pattern of responsePatterns) {
+    const match = transcript.match(pattern);
+    if (match) {
+      const name = match[1];
+      if (name && name.length > 1 && !excludedNames.includes(name.toLowerCase())) {
+        return name.charAt(0).toUpperCase() + name.slice(1);
+      }
+    }
+  }
+  
+  // Look for "this is X" but be more careful - check it's not the assistant
+  const thisIsMatch = transcript.match(/this is (\w+)/gi);
+  if (thisIsMatch) {
+    for (const match of thisIsMatch) {
+      const name = match.replace(/this is /i, '');
+      if (name && name.length > 1 && !excludedNames.includes(name.toLowerCase())) {
         return name.charAt(0).toUpperCase() + name.slice(1);
       }
     }

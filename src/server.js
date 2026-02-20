@@ -597,7 +597,7 @@ async function sendEmail({ config, callSid, fromNumber, duration, transcript, su
   const audioBuffer = await fs.readFile(attachments.audio);
   
   const { intent, category } = extractIntentAndCategory(transcript);
-  const callerName = extractName(transcript);
+  const callerName = extractName(transcript, config.assistant.name);
   const subject = `${category}: ${intent} - ${timestamp.toLocaleDateString()}`;
   
   const formattedDuration = formatDuration(duration);
