@@ -96,8 +96,8 @@ app.post('/incoming-call', async (req, res) => {
     startTime: new Date()
   });
   
-  // Send TwiML response
-  const host = req.headers.host;
+  // Send TwiML response - use hostname without port for WSS
+  const host = req.headers.host?.split(':')[0] || req.headers.host;
   const twimlResponse = `<?xml version="1.0" encoding="UTF-8"?>
     <Response>
       <Say voice="woman">This call is being recorded for quality purposes.</Say>
@@ -207,6 +207,10 @@ app.ws('/media-stream', (ws) => {
   const connectToOpenAI = () => {
     const url = `wss://api.openai.com/v1/realtime?model=${config.openai.model}`;
     
+    console.log('🔗 Connecting to OpenAI...');
+    console.log('   Model:', config.openai.model);
+    console.log('   API Key present:', !!process.env.OPENAI_API_KEY);
+    
     openAiWs = new WebSocket(url, {
       headers: {
         'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
@@ -273,7 +277,9 @@ app.ws('/media-stream', (ws) => {
     });
     
     openAiWs.on('error', (error) => {
-      console.error('OpenAI error:', error.message);
+      console.error('❌ OpenAI WebSocket error:', error.message);
+      console.error('   URL:', url);
+      console.error('   API Key present:', !!process.env.OPENAI_API_KEY);
     });
     
     openAiWs.on('close', () => {
