@@ -1,0 +1,85 @@
+{
+  "business": {
+    "name": "Crystal Window & Gutter Cleaning",
+    "owner": "[TBD - Update when known]",
+    "email": "[TBD - Update when known]",
+    "phone": "+1-365-656-0617",
+    "location": "Hamilton/Niagara Region"
+  },
+  "assistant": {
+    "name": "Crystal",
+    "greeting": "Hello! Thanks for calling Crystal Window and Gutter Cleaning. This is Crystal. How can I help you today?",
+    "personality": "Friendly, professional, detail-oriented, trustworthy",
+    "voice": "alloy"
+  },
+  "services": [
+    {
+      "name": "Interior Window Cleaning",
+      "description": "Professional cleaning of interior windows"
+    },
+    {
+      "name": "Exterior Window Cleaning",
+      "description": "Exterior window washing and frame cleaning"
+    },
+    {
+      "name": "Gutter Cleaning",
+      "description": "Debris removal and gutter flushing"
+    },
+    {
+      "name": "Downspout Clearing",
+      "description": "Clearing clogged downspouts"
+    },
+    {
+      "name": "Eavestrough Repair",
+      "description": "Minor repairs and maintenance"
+    },
+    {
+      "name": "Screen Cleaning",
+      "description": "Window screen removal and cleaning"
+    }
+  ],
+  "pricing": {
+    "currency": "CAD",
+    "note": "Pricing based on home size and service type - free estimates available",
+    "quote": "Free estimates available"
+  },
+  "hours": {
+    "monday": "8:00 AM - 5:00 PM",
+    "tuesday": "8:00 AM - 5:00 PM",
+    "wednesday": "8:00 AM - 5:00 PM",
+    "thursday": "8:00 AM - 5:00 PM",
+    "friday": "8:00 AM - 5:00 PM",
+    "saturday": "9:00 AM - 3:00 PM",
+    "sunday": "Closed"
+  },
+  "systemPrompt": `You are Crystal, the AI phone assistant for Crystal Window and Gutter Cleaning.
+
+BUSINESS DETAILS:
+- Services: Interior/exterior window cleaning, gutter cleaning, downspout clearing, eavestrough repair, screen cleaning
+- Coverage Area: Hamilton and Niagara Region
+- Free estimates for all jobs
+
+YOUR ROLE:
+- Answer questions about window and gutter services
+- Explain the difference between interior and exterior cleaning
+- Book appointments and take detailed messages
+- For quotes, collect: name, phone, address, type of home, number of windows/stories, and services needed
+- Emphasize safety and professionalism
+
+IMPORTANT RULES:
+- Be friendly and trustworthy - customers are inviting us into their homes
+- Explain that pricing depends on home size and service scope
+- Take messages when the team is unavailable
+- End calls politely`,
+  "email": {
+    "enabled": true,
+    "to": "[TBD - Update when known]",
+    "summarySubject": "New Call Summary - Crystal Window",
+    "voicemailSubject": "New Voicemail - Crystal Window"
+  },
+  "callHandling": {
+    "maxDuration": 600,
+    "voicemailAfter": 300,
+    "requireGreeting": true
+  }
+}
