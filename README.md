@@ -1,302 +1,353 @@
-# AI Phone Core
+# AI Phone Core - Retell AI Edition
 
-Multi-client AI phone assistant system. One codebase serves unlimited businesses.
+**Multi-client AI phone assistant system powered by Retell AI.**
 
-## Architecture
+One platform, unlimited businesses. Better voices, lower hallucinations, integrated telephony.
 
-**Hybrid Approach:** Jon's proven conversation structure + dynamic multi-client support
+---
 
-- **Single codebase** serves multiple clients via JSON configuration
-- **Proven prompts** based on production-tested Rake & Clover system
-- **Dynamic generation** adapts to business hours, calendar modes, and client data
+## 🎯 Architecture
 
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│  Twilio Phone   │────▶│  Render Service │────▶│  OpenAI Realtime│
-│  (per client)   │     │  (shared code)  │     │  (AI voice)     │
+│  Retell Phone   │────▶│  Retell AI      │────▶│  Your Webhook   │
+│  (Your Number)  │     │  (Agent)        │     │  (Email/CRM)    │
 └─────────────────┘     └─────────────────┘     └─────────────────┘
-                               │
-                               ▼
-                        ┌─────────────────┐
-                        │  Client Config  │
-                        │  (JSON file)    │
-                        └─────────────────┘
 ```
 
-## Quick Start
+**What Retell Handles:**
+- ✅ Phone number management
+- ✅ AI voice conversation (GPT-4o + ElevenLabs/MiniMax)
+- ✅ Call recording & transcription
+- ✅ Post-call analysis
+- ✅ Voicemail detection
 
+**What You Handle:**
+- Webhook server (optional) for email notifications, CRM integration, etc.
+
+---
+
+## 🚀 Quick Start
+
+### 1. Prerequisites
+- Retell AI account: https://retellai.com
+- Twilio account (for browsing numbers) - optional
+- SMTP credentials (Gmail, SendGrid, etc.) for emails
+
+### 2. Clone & Install
 ```bash
-# Clone and setup
 git clone https://github.com/shawnhyd3-crypto/ai-phone-core.git
-cd ai-phone-core
+cd ai-phone-core/retell-automation
 npm install
-
-# Environment variables
 cp .env.example .env
-# Edit .env with your credentials
-
-# Test config loading
-node test-config.js rake-clover
-
-# Run locally
-npm run dev
 ```
 
-## Environment Variables
+### 3. Configure Environment
+Edit `.env`:
+```bash
+# Retell API Key (from dashboard)
+RETELL_API_KEY=key_xxxxxxxxxxxxx
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `CLIENT_ID` | Yes | Client to load: `rake-clover`, `crystal-window`, `hyde-tech-demo` |
-| `OPENAI_API_KEY` | Yes | OpenAI API key with realtime access |
-| `TWILIO_ACCOUNT_SID` | Yes | Twilio account SID |
-| `TWILIO_AUTH_TOKEN` | Yes | Twilio auth token |
-| `SENDGRID_API_KEY` | Yes | SendGrid API key for email summaries |
-| `FROM_EMAIL` | No | From address for emails (default: noreply@hydetech.ca) |
-| `PORT` | No | Server port (default: 3000) |
+# Email (for call notifications)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
 
-## Adding a New Client
+# Recipients
+NOTIFY_EMAIL=you@example.com
+BCC_EMAIL=client@example.com
+```
 
-1. **Create client config** in `clients/[business-name].json`:
+### 4. Create Agent
+```bash
+npm run setup
+```
 
-```json
-{
-  "business": {
-    "name": "Your Business Name",
-    "owner": "Owner Full Name",
-    "email": "owner@business.com",
-    "phone": "+1-555-555-5555",
-    "website": "https://yourbusiness.com",
-    "location": "City, State"
-  },
-  "assistant": {
-    "name": "Sarah",
-    "personality": "Friendly, professional, helpful",
-    "voice": "marin"
-  },
-  "greetings": {
-    "variations": [
-      "Thanks for calling Your Business! This is Sarah. How can I help?",
-      "Hi! You've reached Your Business. This is Sarah. How can I help today?",
-      "Hey there! Sarah from Your Business. What can I do for you today?"
-    ]
-  },
-  "services": [
-    {
-      "name": "Service Name",
-      "description": "What this service includes",
-      "pricing": "Starting at $X"
-    }
+This will:
+- Create a Retell LLM with your business prompt
+- Create an Agent with voice settings
+- Output Agent ID for next steps
+
+### 5. Buy Phone Number
+
+**Option A: Use Twilio to find a specific city**
+```bash
+# Search for numbers in a specific location
+curl -u "TWILIO_SID:TWILIO_TOKEN" \
+  "https://api.twilio.com/2010-04-01/Accounts/TWILIO_SID/AvailablePhoneNumbers/CA/Local.json?InLocality=Oakville"
+
+# Note the number you want
+```
+
+**Option B: Just pick an area code**
+Go to Retell Dashboard → Phone Numbers → Buy Number → Select area code
+
+**Then buy through Retell:**
+```bash
+curl -X POST https://api.retellai.com/create-phone-number \
+  -H "Authorization: Bearer $RETELL_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "phone_number": "+12895551234",
+    "inbound_agent_id": "agent_xxxxx",
+    "outbound_agent_id": "agent_xxxxx",
+    "nickname": "My Business DEV"
+  }'
+```
+
+### 6. Deploy Webhook Server (Optional)
+```bash
+# If you want email notifications after calls
+cd retell-automation
+git init
+git remote add origin your-repo-url
+git push
+
+# Deploy to Render/Railway/Vercel
+# Set webhook URL in Retell Dashboard → Phone Numbers → [Your Number]
+```
+
+### 7. Test
+Call your number. Check Retell Dashboard for:
+- Call recording
+- Transcript
+- Post-call analysis
+
+---
+
+## 📂 Project Structure
+
+```
+ai-phone-core/
+├── retell-automation/          # Main automation & webhook server
+│   ├── setup.js                # Creates agent + LLM
+│   ├── webhook-server.js       # Handles call events → sends emails
+│   ├── test-call.js            # Test script
+│   ├── .env.example            # Environment template
+│   └── package.json
+│
+├── retell-migration/           # Migration docs & research
+│   ├── setup-instructions.md   # Full setup guide
+│   ├── RESEARCH-SUMMARY.md     # Retell capabilities
+│   ├── agent-config.json       # Agent configuration example
+│   └── twilio-integration.js   # (Legacy) Twilio integration code
+│
+├── clients/                    # Business configuration files
+│   ├── rake-clover.json        # Example client config
+│   └── crystal-window.json
+│
+└── src/                        # (Legacy) OpenAI Realtime server code
+```
+
+---
+
+## 🎛️ Agent Configuration
+
+Edit `retell-automation/setup.js` to customize:
+
+### Voice Options
+```javascript
+const VOICE_OPTIONS = {
+  recommended: [
+    '11labs-Bella',      // Warm, professional
+    '11labs-Rachel',     // Friendly, clear
+    'minimax-Hailey',    // Natural, engaging
+    'cartesia-Lily',     // Youthful, expressive
   ],
-  "pricing": {
-    "currency": "CAD",
-    "minimum": "$150 plus HST",
-    "quote": "Free estimates available"
-  },
-  "hours": {
-    "monday": "8:00 AM - 6:00 PM",
-    "tuesday": "8:00 AM - 6:00 PM",
-    "wednesday": "8:00 AM - 6:00 PM",
-    "thursday": "8:00 AM - 6:00 PM",
-    "friday": "8:00 AM - 6:00 PM",
-    "saturday": "8:00 AM - 4:00 PM",
-    "sunday": "Closed"
-  },
-  "serviceArea": [
-    "City 1",
-    "City 2",
-    "City 3"
-  ],
-  "calendar": {
-    "mode": "lead_capture"
-  },
-  "email": {
-    "enabled": true,
-    "to": "owner@business.com",
-    "summarySubject": "New Call Summary",
-    "voicemailSubject": "New Voicemail"
-  },
-  "callHandling": {
-    "maxDuration": 600,
-    "voicemailAfter": 300,
-    "silenceThreshold": 10
+  settings: {
+    voice_speed: 1.0,           // 0.5-2.0
+    voice_temperature: 1.0,     // 0-2 (stability)
+    enable_backchannel: true,   // "uh-huh", "yeah"
+    interruption_sensitivity: 1.0 // 0-1 (easy to interrupt)
   }
 }
 ```
 
-2. **Test the config**:
-```bash
-node test-config.js your-business-name
-```
+### System Prompt
+Edit the `SARAH_PROMPT` constant in `setup.js` with your:
+- Business name & services
+- Greeting message
+- Required information to collect
+- Pricing & hours
+- Conversation style
 
-3. **Deploy new Render service**:
-   - Point to `ai-phone-core` repo
-   - Set `CLIENT_ID=your-business-name`
-   - Add Twilio phone number webhook → `https://your-service.onrender.com/incoming-call`
-
-## Features
-
-### Conversation Quality (Jon's Proven Structure)
-- **Randomized greetings** — Natural variation each call
-- **Business hours awareness** — Knows if open/closed
-- **Structured conversation flow** — Proven from 100+ real calls
-- **Speaking style rules** — Short sentences, contractions, natural pauses
-- **Smart acknowledgments** — "Perfect!", "Got it.", "Great."
-- **Explicit closing** — Clean handoffs, proper goodbyes
-
-### Calendar Modes
-
-| Mode | Behavior |
-|------|----------|
-| `lead_capture` | Take detailed message, promise callback (default) |
-| `google` | Check availability, book appointments, send invites |
-| `jobber` | Capture quote details, pass to owner (no direct booking) |
-
-### Call Handling
-- **Dual-channel recording** — Separate caller/AI tracks
-- **Whisper transcription** — Timestamped transcripts
-- **GPT summaries** — Automated call summaries
-- **Email delivery** — Audio + transcript + summary
-- **Silence detection** — Auto-end after prolonged silence
-
-## Deployment Guide
-
-### Render Setup (Per Client)
-
-1. **Create Web Service**
-   - Name: `ai-phone-[client-name]`
-   - Root Directory: (leave empty)
-   - Build Command: `npm install`
-   - Start Command: `npm start`
-
-2. **Environment Variables**
-   ```
-   CLIENT_ID=[client-name]
-   OPENAI_API_KEY=sk-...
-   TWILIO_ACCOUNT_SID=AC...
-   TWILIO_AUTH_TOKEN=...
-   SENDGRID_API_KEY=SG...
-   FROM_EMAIL=calls@hydetech.ca
-   ```
-
-3. **Twilio Webhook**
-   - Go to Twilio Console → Phone Numbers → Active numbers
-   - Find the client's number
-   - "A Call Comes In" → Webhook → `https://ai-phone-[client-name].onrender.com/incoming-call`
-   - HTTP Method: POST
-
-### Testing
-
-```bash
-# Local config test
-node test-config.js [client-id]
-
-# Health check (after deploy)
-curl https://ai-phone-[client-name].onrender.com/health
-
-# Test call (use Twilio number)
-```
-
-## File Structure
-
-```
-ai-phone-core/
-├── src/
-│   ├── server.js           # Main Express server (WebSocket, Twilio, OpenAI)
-│   ├── prompt-engine.js    # Generates system prompts (Jon's structure + dynamic)
-│   ├── config-loader.js    # Loads client JSON + validates
-│   ├── utils.js            # Intent extraction, name detection, formatting
-│   └── email-templates.js  # HTML/text email generation
-├── clients/
-│   ├── rake-clover.json    # Rake and Clover Landscaping
-│   ├── crystal-window.json # Crystal Window & Gutter Cleaning
-│   └── hyde-tech-demo.json # Hyde Tech demo
-├── test-config.js          # Config testing utility
-├── package.json
-└── README.md
-```
-
-## How It Works
-
-### 1. Call Flow
-```
-Caller → Twilio → /incoming-call → WebSocket → OpenAI Realtime → AI Voice
-                ↓
-         Recording starts
-                ↓
-         Call ends → Process recording → Transcribe → Summarize → Email
-```
-
-### 2. Prompt Generation
+### Post-Call Analysis
+Customize what data to extract:
 ```javascript
-// 1. Load client config
-const config = loadClient('rake-clover');
-
-// 2. Generate prompt (embeds greeting + conversation structure)
-const prompt = promptEngine.generateSystemPrompt({
-  calendarMode: 'lead_capture',
-  timeOfDay: 'afternoon'
-});
-
-// 3. Send to OpenAI Realtime API
-openai.session.update({ instructions: prompt });
+post_call_analysis_data: [
+  {
+    type: 'string',
+    name: 'customer_name',
+    description: 'The name of the customer'
+  },
+  {
+    type: 'enum',
+    name: 'service_requested',
+    choices: ['lawn_mowing', 'snow_removal', 'cleanup']
+  }
+]
 ```
 
-### 3. Generated Prompt Example
-```
-You're Sarah, the friendly receptionist for Rake and Clover Landscaping...
+---
 
-START WITH: "Hey there! Sarah from Rake and Clover. What can I do for you today?"
+## 🔧 Common Tasks
 
-Then ask: "What can I help you with today?"
+### Update Agent Prompt
+1. Edit `setup.js` → `SARAH_PROMPT`
+2. Re-run: `npm run setup` (will update existing agent)
+3. Test: Call your number
 
-AFTER they describe the service:
-1. Ask: "Perfect! And who's calling?"
-...
-
-SPEAKING STYLE:
-- Keep sentences SHORT (under 15 words each)
-- Use contractions (it's, we're, that's, I'll)
-...
-
-ACKNOWLEDGMENTS: "Perfect!", "Got it.", "Great.", "Okay!", "Sounds good."
+### Change Voice
+```bash
+# Via API
+curl -X PATCH https://api.retellai.com/update-agent/agent_xxxxx \
+  -H "Authorization: Bearer $RETELL_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"voice_id": "11labs-Rachel"}'
 ```
 
-## Troubleshooting
+Or: Retell Dashboard → Agents → [Agent] → Edit → Voice
 
-### Silence after recording disclaimer
-- Check Render logs for OpenAI connection errors
-- Verify `OPENAI_API_KEY` has realtime access
-- Check model version matches (`gpt-4o-realtime-preview-2024-12-17`)
+### View Call Logs
+Dashboard → Phone Numbers → [Number] → Calls
 
-### Emails not sending
-- Verify `SENDGRID_API_KEY` is valid
-- Check `FROM_EMAIL` is verified in SendGrid
-- Check spam folders
+Or via API:
+```bash
+curl -H "Authorization: Bearer $RETELL_API_KEY" \
+  https://api.retellai.com/v2/list-calls
+```
 
-### WebSocket errors
-- Ensure Twilio webhook uses `wss://` (not `ws://`)
-- Check Render service is not sleeping (upgrade to paid plan)
+### Test Webhook Locally
+```bash
+cd retell-automation
+npm run webhook  # Starts on port 3000
 
-## Development
+# In another terminal
+curl -X POST http://localhost:3000/webhook/call-ended \
+  -H "Content-Type: application/json" \
+  -d @test-payload.json
+```
 
-### Adding Features
-1. Edit relevant file in `src/`
-2. Test locally with `npm run dev`
-3. Commit and push
-4. All clients get the update on next deploy
+---
 
-### Modifying Prompts
-Edit `src/prompt-engine.js` → affects all clients with generated structure.
+## 💰 Pricing
 
-### Client-Specific Changes
-Edit `clients/[name].json` → affects only that client.
+| Item | Retell AI | Twilio + OpenAI (old) |
+|------|-----------|----------------------|
+| Phone Number | $2/month | $1.15/month + setup |
+| Per-Minute | $0.05-0.10 | $0.06 + $0.0085 |
+| Recording | Included | DIY |
+| Transcription | Included | DIY |
+| Post-Call Analysis | Included | DIY |
+| **5-min call** | **~$0.25-0.50** | **~$0.40 + complexity** |
 
-## Credits
+**Retell is cheaper AND simpler.**
 
-- **Conversation design** based on Rake & Clover Landscaping production system by Jonathan Hynes
-- **Multi-client architecture** by Hyde Tech Solutions
-- **Powered by** OpenAI Realtime API, Twilio, SendGrid
+---
 
-## License
+## 🔄 Migration from Twilio + OpenAI
+
+If you have existing Twilio + OpenAI Realtime setup:
+
+### Option 1: Import Number to Retell
+Dashboard → Phone Numbers → Import Number → Twilio
+- Enter Twilio SID + Auth Token
+- Select number to import
+- Retell takes over webhooks
+
+### Option 2: Keep Both Running
+- Buy new Retell number for testing
+- Keep old Twilio number live
+- Migrate when confident
+
+### Option 3: Fresh Start
+- Buy new number in Retell
+- Update client/marketing materials
+- Port old number later (if needed)
+
+---
+
+## 🧪 Testing
+
+### Manual Testing
+1. Call the number
+2. Go through full conversation
+3. Check Retell Dashboard:
+   - Recording quality
+   - Transcript accuracy
+   - Post-call analysis results
+4. Verify email received (if webhook configured)
+
+### Automated Testing (WIP)
+```bash
+npm run test-call
+```
+
+---
+
+## 🚨 Troubleshooting
+
+### Agent doesn't answer
+- Check Retell Dashboard → Phone Numbers → Verify agent is bound
+- Check agent status (active/inactive)
+- Verify phone number purchased successfully
+
+### Voice sounds robotic
+- Try different voice: Dashboard → Agent → Voice Settings
+- Adjust voice_temperature (0.8-1.0)
+- Adjust voice_speed (0.9-1.0)
+
+### Email notifications not working
+- Check webhook URL in Retell Dashboard
+- Verify SMTP credentials in `.env`
+- Check webhook server logs
+- Test with: `npm run webhook` locally
+
+### Agent going off-topic
+- Lower LLM temperature in `setup.js` (try 0.1-0.3)
+- Strengthen system prompt with "DO NOT" instructions
+- Add guardrails in Retell Dashboard
+
+---
+
+## 📚 Resources
+
+- **Retell Docs:** https://docs.retellai.com
+- **API Reference:** https://docs.retellai.com/api-references
+- **Dashboard:** https://dashboard.retellai.com
+- **Support:** support@retellai.com
+
+---
+
+## 🤝 Credits
+
+- **System Architecture:** Hyde Tech Solutions
+- **Conversation Design:** Based on Rake & Clover production system (Jonathan Hynes)
+- **Platform:** Retell AI
+
+---
+
+## 📝 License
 
 MIT
+
+---
+
+## 🔥 Current Status
+
+**Production:**
+- ✅ Rake & Clover DEV: (289) 815-0431 - Oakville, ON
+- ✅ Agent: Sarah (agent_af0d2e3876b2cbfc55fa668178)
+- 🔄 Webhook: Configuring email notifications
+- 🔄 Optimization: Sarah (sub-agent) researching best settings
+
+**Next Steps:**
+1. Configure webhook for email notifications
+2. Optimize agent based on Sarah's research
+3. Purchase Crystal Window number
+4. Migrate Rake & Clover LIVE number
+
+---
+
+Last Updated: 2026-02-20
