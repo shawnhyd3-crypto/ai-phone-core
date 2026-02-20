@@ -212,7 +212,7 @@ app.ws('/media-stream', (ws) => {
               role: 'user',
               content: [{ 
                 type: 'input_text', 
-                text: `[The caller seems to have hung up or is done. Say "Thanks for calling ${config.business.name}. Have a great day! Goodbye." and end the conversation.]` 
+                text: `[The caller seems to have hung up or is done. Say a brief goodbye like "Okay, have a good day!" or "Have a great day!" then end the call. Keep it under 6 words.]` 
               }]
             }
           }));
