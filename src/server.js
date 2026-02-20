@@ -19,12 +19,44 @@ require('dotenv').config();
 
 const { loadClient } = require('./config-loader');
 const PromptEngine = require('./prompt-engine');
-const { 
-  extractIntentAndCategory, 
-  extractName, 
-  formatDuration, 
-  formatPhoneNumber 
+const {
+  extractIntentAndCategory,
+  extractName,
+  formatDuration,
+  formatPhoneNumber
 } = require('./utils');
+
+/**
+ * Extract the primary service mentioned in the call
+ */
+function extractServiceMentioned(transcript) {
+  if (!transcript) return null;
+
+  const lower = transcript.toLowerCase();
+
+  // Service keywords in order of priority
+  const services = [
+    { keywords: ['snow', 'plow', 'winter', 'shovel'], name: 'Snow Removal' },
+    { keywords: ['mow', 'lawn', 'grass', 'cutting'], name: 'Lawn Mowing' },
+    { keywords: ['gutter', 'eavestrough', 'downspout'], name: 'Gutter Cleaning' },
+    { keywords: ['window', 'windows'], name: 'Window Cleaning' },
+    { keywords: ['cleanup', 'clean up', 'yard cleanup', 'fall cleanup', 'spring cleanup'], name: 'Yard Cleanup' },
+    { keywords: ['mulch', 'mulching'], name: 'Mulching' },
+    { keywords: ['garden', 'gardening', 'weeding'], name: 'Garden Maintenance' },
+    { keywords: ['quote', 'estimate', 'pricing', 'how much'], name: 'Quote Request' },
+    { keywords: ['booking', 'schedule', 'appointment'], name: 'Booking' }
+  ];
+
+  for (const service of services) {
+    for (const keyword of service.keywords) {
+      if (lower.includes(keyword)) {
+        return service.name;
+      }
+    }
+  }
+
+  return null;
+}
 const { createPlainTextEmail, createHtmlEmail } = require('./email-templates');
 
 // Load client config with dynamic prompt generation
@@ -598,28 +630,47 @@ async function sendEmail({ config, callSid, fromNumber, duration, transcript, su
 
   const { intent, category } = extractIntentAndCategory(transcript);
   const callerName = extractName(transcript, config.assistant.name);
-  const subject = `${category}: ${intent} - ${timestamp.toLocaleDateString()}`;
+
+  // Better subject line: prioritize caller name, then service mentioned, then date
+  const dateStr = timestamp.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric'
+  });
+
+  // Try to extract service mentioned from transcript
+  const serviceMentioned = extractServiceMentioned(transcript);
+
+  let subject;
+  if (callerName && callerName !== 'Unknown') {
+    subject = serviceMentioned
+      ? `${callerName} - ${serviceMentioned} - ${dateStr}`
+      : `${callerName} - New Call - ${dateStr}`;
+  } else {
+    subject = serviceMentioned
+      ? `${serviceMentioned} Inquiry - ${dateStr}`
+      : `New Call - ${callerNumber} - ${dateStr}`;
+  }
 
   const formattedDuration = formatDuration(duration);
   const callerNumber = formatPhoneNumber(fromNumber);
 
-  // Build descriptive filename: YYYY-MM-DD_HHMM_ClientName_PhoneNumber.mp3
+  // Build descriptive filename: YYYY-MM-DD_HHMM_CallerName_PhoneNumber.mp3
   const dateStr = timestamp.toLocaleDateString('en-CA'); // YYYY-MM-DD format
-  const timeStr = timestamp.toLocaleTimeString('en-US', { 
-    hour12: false, 
-    hour: '2-digit', 
-    minute: '2-digit' 
+  const timeStr = timestamp.toLocaleTimeString('en-US', {
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit'
   }).replace(':', ''); // HHMM format
-  
-  // Sanitize client name for filename
-  const clientName = config.business.name
-    .replace(/[^a-zA-Z0-9\s]/g, '') // Remove special chars
-    .replace(/\s+/g, '-'); // Spaces to hyphens
-  
+
+  // Sanitize caller name for filename
+  const callerNameForFile = (callerName && callerName !== 'Unknown')
+    ? callerName.replace(/[^a-zA-Z0-9]/g, '') // Remove all non-alphanumeric
+    : 'Unknown';
+
   // Sanitize phone number for filename
   const phoneForFilename = callerNumber.replace(/\D/g, '');
-  
-  const filename = `${dateStr}_${timeStr}_${clientName}_${phoneForFilename}.mp3`;
+
+  const filename = `${dateStr}_${timeStr}_${callerNameForFile}_${phoneForFilename}.mp3`;
 
   const emailData = {
     personalizations: [{
