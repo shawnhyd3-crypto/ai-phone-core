@@ -68,9 +68,10 @@
   ],
   "email": {
     "enabled": true,
-    "to": "rake.clover.landscaping@gmail.com",
-    "summarySubject": "New Call Summary - Rake and Clover",
-    "voicemailSubject": "New Voicemail - Rake and Clover"
+    "to": "shawn@hydetech.ca",
+    "bcc": "rake.clover.landscaping@gmail.com",
+    "summarySubject": "[DEV TEST] New Call Summary - Rake and Clover",
+    "voicemailSubject": "[DEV TEST] New Voicemail - Rake and Clover"
   },
   "callHandling": {
     "maxDuration": 600,
