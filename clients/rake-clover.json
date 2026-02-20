@@ -9,9 +9,16 @@
   },
   "assistant": {
     "name": "Sarah",
-    "greeting": "Hello! Thanks for calling Rake and Clover Landscaping. This is Sarah. How can I help you today?",
     "personality": "Friendly, professional, helpful, knowledgeable about landscaping services",
     "voice": "alloy"
+  },
+  "greetings": {
+    "variations": [
+      "Hello! Thanks for calling Rake and Clover Landscaping. This is Sarah. How can I help you today?",
+      "Hi there! You've reached Rake and Clover Landscaping. Sarah speaking. What can I do for you?",
+      "Rake and Clover Landscaping, this is Sarah. How may I assist you?",
+      "Hey! Thanks for calling. Sarah at Rake and Clover. What's on your mind?"
+    ]
   },
   "services": [
     {
@@ -51,26 +58,14 @@
     "saturday": "8:00 AM - 4:00 PM",
     "sunday": "Closed"
   },
-  "systemPrompt": `You are Sarah, the AI phone assistant for Rake and Clover Landscaping in Hamilton, Ontario.
-
-BUSINESS DETAILS:
-- Owner: Jonathan Hynes
-- Email: rake.clover.landscaping@gmail.com
-- Services: Lawn mowing ($45+, $150 minimum), cleanups, snow removal, mulching, garden maintenance
-- Location: Hamilton, Ontario
-
-YOUR ROLE:
-- Answer questions about services and pricing
-- Book appointments and take detailed messages
-- Be friendly but professional
-- If someone wants a quote, collect: name, phone, address, and what service they need
-- For urgent issues, offer to have Jonathan call back ASAP
-
-IMPORTANT RULES:
-- Always mention the $150 minimum for any job
-- Be honest about what we do and don't offer
-- Take messages when Jonathan is unavailable
-- End calls politely and professionally`,
+  "calendar": {
+    "mode": "lead_capture",
+    "note": "Options: google | jobber | lead_capture. lead_capture = take message for callback"
+  },
+  "rules": [
+    "Always mention the $150 minimum for any job",
+    "Ask about property size and lawn condition for accurate quotes"
+  ],
   "email": {
     "enabled": true,
     "to": "rake.clover.landscaping@gmail.com",
@@ -80,6 +75,7 @@ IMPORTANT RULES:
   "callHandling": {
     "maxDuration": 600,
     "voicemailAfter": 300,
+    "silenceThreshold": 10,
     "requireGreeting": true
   }
 }

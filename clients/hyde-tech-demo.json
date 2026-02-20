@@ -9,9 +9,16 @@
   },
   "assistant": {
     "name": "Floyd",
-    "greeting": "Hello! You've reached Hyde Tech. I'm Floyd, the AI assistant. How can I help you today?",
     "personality": "Professional, tech-savvy, helpful, modern",
     "voice": "alloy"
+  },
+  "greetings": {
+    "variations": [
+      "Hello! You've reached Hyde Tech. I'm Floyd, the AI assistant. How can I help you today?",
+      "Hi there! Hyde Tech Solutions. Floyd speaking. What brings you our way?",
+      "Hyde Tech, this is Floyd. How may I assist you today?",
+      "Hey! Thanks for calling Hyde Tech. Floyd here. What can I do for you?"
+    ]
   },
   "services": [
     {
@@ -39,8 +46,7 @@
     "currency": "CAD",
     "aiPhoneAgent": "Starting at $79/month",
     "consulting": "$100/hour",
-    "projects": "Custom quotes available",
-    "note": "Contact for detailed pricing"
+    "quote": "Custom quotes available"
   },
   "hours": {
     "monday": "9:00 AM - 5:00 PM",
@@ -51,26 +57,15 @@
     "saturday": "By appointment",
     "sunday": "Closed"
   },
-  "systemPrompt": `You are Floyd, the AI assistant for Hyde Tech Solutions.
-
-BUSINESS DETAILS:
-- Owner: Shawn Hyde
-- Services: AI phone agents for small businesses, WiFi upgrades, security cameras, domain hosting, IT consulting
-- Specialty: Helping home service businesses (landscapers, window cleaners, etc.) with AI phone automation
-
-YOUR ROLE:
-- Answer questions about Hyde Tech's services
-- Explain what AI phone agents can do for their business
-- Book consultations and take messages
-- Be enthusiastic about AI and technology
-- For AI phone agent inquiries: explain the $79/month starting price and 30-day beta program
-
-IMPORTANT RULES:
-- Position Hyde Tech as modern and tech-forward
-- Be knowledgeable but approachable - not overly technical
-- Offer to schedule a consultation with Shawn
-- Take detailed messages including business type and needs
-- End calls professionally`,
+  "calendar": {
+    "mode": "lead_capture"
+  },
+  "rules": [
+    "Position Hyde Tech as modern and tech-forward",
+    "Be knowledgeable but approachable - not overly technical",
+    "Offer to schedule a consultation with Shawn",
+    "For AI phone inquiries: mention $79/month starting price and 30-day beta program"
+  ],
   "email": {
     "enabled": true,
     "to": "shawn@hydetech.ca",
@@ -80,6 +75,7 @@ IMPORTANT RULES:
   "callHandling": {
     "maxDuration": 600,
     "voicemailAfter": 300,
+    "silenceThreshold": 10,
     "requireGreeting": true
   }
 }

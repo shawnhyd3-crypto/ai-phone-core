@@ -37,19 +37,43 @@ Add new clients by creating a JSON file in `clients/`:
     "name": "Your Business",
     "owner": "Owner Name",
     "email": "owner@business.com",
-    "phone": "+1-555-555-5555"
+    "phone": "+1-555-555-5555",
+    "location": "City, State"
   },
   "assistant": {
     "name": "Sarah",
-    "greeting": "Hello! Thanks for calling. How can I help?"
+    "personality": "Friendly, professional, helpful",
+    "voice": "alloy"
+  },
+  "greetings": {
+    "variations": [
+      "Hello! Thanks for calling...",
+      "Hi there! You've reached..."
+    ]
   },
   "services": [
-    { "name": "Service 1", "description": "Description" }
-  ]
+    { 
+      "name": "Service 1", 
+      "description": "Description",
+      "pricing": "Starting at $X"
+    }
+  ],
+  "hours": {
+    "monday": "8:00 AM - 6:00 PM",
+    "tuesday": "8:00 AM - 6:00 PM",
+    ...
+  },
+  "calendar": {
+    "mode": "lead_capture"
+  },
+  "email": {
+    "enabled": true,
+    "to": "owner@business.com"
+  }
 }
 ```
 
-See existing configs in `clients/` for examples.
+See existing configs in `clients/` for full examples.
 
 ## Deployment
 
@@ -82,19 +106,48 @@ Run this to list configured clients:
 node -e "console.log(require('./src/config-loader').listAvailableClients())"
 ```
 
+## Dynamic Features (Jon's Features for All Clients)
+
+The prompt engine generates context-aware prompts with:
+
+- **Random greeting variations** — Different greeting each call
+- **Time-aware greetings** — "Good morning!", "Good afternoon!" etc.
+- **Business hours awareness** — Prompt includes OPEN/CLOSED status
+- **Calendar modes** — Support for Google Calendar, Jobber, or lead capture
+- **Silence detection** — Auto-end calls after prolonged silence
+
+### Test Config Loading
+
+```bash
+# Test any client config
+node test-config.js rake-clover
+node test-config.js crystal-window
+```
+
 ## Architecture
 
 ```
 ai-phone-core/
 ├── src/
 │   ├── server.js          # Main server (shared)
-│   └── config-loader.js   # Loads client config
-├── clients/               # Client-specific configs
+│   ├── config-loader.js   # Loads client config + generates prompts
+│   ├── prompt-engine.js   # Dynamic prompt generation
+│   ├── utils.js           # Helper functions
+│   └── email-templates.js # Email formatting
+├── clients/               # Client-specific data only
 │   ├── rake-clover.json
 │   ├── crystal-window.json
 │   └── hyde-tech-demo.json
+├── test-config.js         # Config testing utility
 └── package.json
 ```
+
+### How It Works
+
+1. **Client data** (`clients/*.json`) — Business info, services, hours, rules
+2. **Prompt engine** (`src/prompt-engine.js`) — Generates dynamic system prompt
+3. **Config loader** (`src/config-loader.js`) — Combines data + generated prompts
+4. **Server** (`src/server.js`) — Uses `_generated.systemPrompt` and `_generated.greeting`
 
 Each Render service:
 - Same codebase

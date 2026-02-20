@@ -8,9 +8,16 @@
   },
   "assistant": {
     "name": "Crystal",
-    "greeting": "Hello! Thanks for calling Crystal Window and Gutter Cleaning. This is Crystal. How can I help you today?",
     "personality": "Friendly, professional, detail-oriented, trustworthy",
     "voice": "alloy"
+  },
+  "greetings": {
+    "variations": [
+      "Hello! Thanks for calling Crystal Window and Gutter Cleaning. This is Crystal. How can I help you today?",
+      "Hi there! You've reached Crystal Window and Gutter Cleaning. Crystal speaking. What can I do for you?",
+      "Crystal Window and Gutter Cleaning, this is Crystal. How may I assist you?",
+      "Hey! Thanks for calling. Crystal here. What's on your mind?"
+    ]
   },
   "services": [
     {
@@ -40,7 +47,7 @@
   ],
   "pricing": {
     "currency": "CAD",
-    "note": "Pricing based on home size and service type - free estimates available",
+    "minimum": "Contact for minimum pricing",
     "quote": "Free estimates available"
   },
   "hours": {
@@ -52,25 +59,15 @@
     "saturday": "9:00 AM - 3:00 PM",
     "sunday": "Closed"
   },
-  "systemPrompt": `You are Crystal, the AI phone assistant for Crystal Window and Gutter Cleaning.
-
-BUSINESS DETAILS:
-- Services: Interior/exterior window cleaning, gutter cleaning, downspout clearing, eavestrough repair, screen cleaning
-- Coverage Area: Hamilton and Niagara Region
-- Free estimates for all jobs
-
-YOUR ROLE:
-- Answer questions about window and gutter services
-- Explain the difference between interior and exterior cleaning
-- Book appointments and take detailed messages
-- For quotes, collect: name, phone, address, type of home, number of windows/stories, and services needed
-- Emphasize safety and professionalism
-
-IMPORTANT RULES:
-- Be friendly and trustworthy - customers are inviting us into their homes
-- Explain that pricing depends on home size and service scope
-- Take messages when the team is unavailable
-- End calls politely`,
+  "calendar": {
+    "mode": "lead_capture",
+    "note": "Update to 'google' or 'jobber' when integrated"
+  },
+  "rules": [
+    "Be trustworthy - customers are inviting us into their homes",
+    "Explain that pricing depends on home size and service scope",
+    "Ask about number of stories and accessibility for accurate quotes"
+  ],
   "email": {
     "enabled": true,
     "to": "[TBD - Update when known]",
@@ -80,6 +77,7 @@ IMPORTANT RULES:
   "callHandling": {
     "maxDuration": 600,
     "voicemailAfter": 300,
+    "silenceThreshold": 10,
     "requireGreeting": true
   }
 }
