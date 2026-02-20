@@ -1,8 +1,8 @@
 /**
  * Prompt Engine - Dynamic system prompt generation
  * 
- * Generates context-aware prompts based on client config + real-time context
- * (time of day, calendar mode, business hours, etc.)
+ * Hybrid approach: Jon's proven conversation structure + dynamic generation
+ * Based on Rake & Clover production system
  */
 
 const path = require('path');
@@ -18,239 +18,212 @@ class PromptEngine {
 
   /**
    * Generate the complete system prompt for a call
+   * EMBEDS the greeting directly in the prompt (like Jon's working version)
    */
   generateSystemPrompt(context = {}) {
     const {
       calendarMode = 'lead_capture', // google | jobber | lead_capture
-      callType = 'inbound', // inbound | callback
+      callType = 'inbound',
       timeOfDay = this.getCurrentTimeOfDay()
     } = context;
 
-    const parts = [
-      this.getIdentitySection(),
-      this.getBusinessDetailsSection(),
-      this.getServicesSection(),
-      this.getHoursSection(timeOfDay),
-      this.getCalendarSection(calendarMode),
-      this.getConversationFlowSection(),
-      this.getRulesSection()
+    // Select a random greeting variation (Jon's approach)
+    const greeting = this.selectGreeting(timeOfDay);
+    const isOpen = this.isBusinessOpen();
+    const ownerFirstName = this.business.owner?.split(' ')[0] || 'the owner';
+
+    // Build the complete prompt (matching Jon's structure)
+    return `You're ${this.assistant.name}, the friendly receptionist for ${this.business.name}. You're warm, personal, and professional. ${this.business.owner || 'The owner'} is the owner.
+
+${this.getHoursContext(isOpen)}
+
+START WITH: "${greeting}"
+
+Then ask: "What can I help you with today?"
+
+AFTER they describe the service:
+1. Ask: "Perfect! And who's calling?"
+2. Get their phone number: "What's the best number to reach you?"
+3. Get their address: "What's the property address?"
+4. Ask about timing: "When were you hoping to have this done?"
+
+${this.getBookingInstructions(calendarMode, ownerFirstName)}
+
+SPEAKING STYLE:
+- Keep sentences SHORT (under 15 words each)
+- Use contractions (it's, we're, that's, I'll)
+- Pause naturally between thoughts
+- Vary your phrasing
+- Sound like you're thinking, not reading
+- Use their name naturally once you have it
+- Be warm and personal, not formal
+
+CONVERSATION FLOW:
+- Wait for clear speech - don't interrupt if you hear background noise
+- If caller is on speakerphone or line is noisy, speak slowly and confirm understanding
+- After asking a question, pause briefly for their response
+- If you accidentally interrupt, apologize: "Sorry, go ahead" or "My mistake, you were saying?"
+- Don't respond to coughs, background chatter, or unclear noises
+
+Ask ONE question at a time. Wait for their answer.
+
+ACKNOWLEDGMENTS: "Perfect!", "Got it.", "Great.", "Okay!", "Sounds good."
+
+${this.getHoursSection()}
+
+${this.getServicesSection()}
+
+${this.getPricingSection()}
+
+${this.getServiceAreaSection()}
+
+If frustrated client or time-sensitive request: This qualifies as urgent. Get their details and let them know ${ownerFirstName} will call back as soon as possible.
+
+CLOSING THE CALL:
+When the caller is done (they say "bye", "that's all", "thank you", "goodbye", "that's it", or similar):
+1. Say: "Thanks for calling! Have a great day."
+2. Say: "Goodbye."
+3. END THE CALL - stop speaking and let the call end naturally
+
+Close: "Thanks for calling ${this.business.name}. Have a great day!"`;
+  }
+
+  /**
+   * Select a random greeting (Jon's style - casual and warm)
+   */
+  selectGreeting(timeOfDay) {
+    const variations = this.config.greetings?.variations || this.getDefaultGreetings();
+    return variations[Math.floor(Math.random() * variations.length)];
+  }
+
+  /**
+   * Get default greetings (Jon's casual style)
+   */
+  getDefaultGreetings() {
+    const businessName = this.business.name;
+    const assistantName = this.assistant.name;
+    
+    return [
+      `Thanks for calling ${businessName}! This is ${assistantName}. How can I help?`,
+      `Good morning! ${businessName}. I'm ${assistantName}. What can I do for you?`,
+      `Hi! You've reached ${businessName.split(' ').slice(0, 2).join(' ')}. This is ${assistantName}. How can I help today?`,
+      `${businessName}, this is ${assistantName}. What can I help you with?`,
+      `Hey there! ${assistantName} from ${businessName.split(' ').slice(0, 2).join(' ')}. What can I do for you today?`
     ];
-
-    return parts.join('\n\n');
   }
 
   /**
-   * Generate a dynamic greeting based on context
+   * Hours context based on open/closed status
    */
-  generateGreeting(context = {}) {
-    const { timeOfDay = this.getCurrentTimeOfDay() } = context;
-    
-    const greetings = this.config.greetings?.variations || this.getDefaultGreetings(timeOfDay);
-    
-    // Pick random greeting
-    const greeting = greetings[Math.floor(Math.random() * greetings.length)];
-    
-    // Personalize with time-appropriate modifier
-    const timeModifier = this.getTimeModifier(timeOfDay);
-    
-    return `${timeModifier}${greeting}`.trim();
-  }
-
-  /**
-   * Identity section - who the AI is
-   */
-  getIdentitySection() {
-    return `You are ${this.assistant.name}, the AI phone assistant for ${this.business.name} in ${this.business.location || 'our service area'}.
-
-YOUR PERSONALITY:
-${this.assistant.personality || 'Friendly, professional, and helpful'}
-
-YOUR VOICE:
-Speak naturally and conversationally, like a real receptionist. Be warm but efficient.`;
-  }
-
-  /**
-   * Business details section
-   */
-  getBusinessDetailsSection() {
-    let section = `BUSINESS DETAILS:
-- Business Name: ${this.business.name}
-- Owner: ${this.business.owner || 'Not specified'}
-- Location: ${this.business.location || 'Not specified'}`;
-
-    if (this.business.email) {
-      section += `\n- Email: ${this.business.email}`;
+  getHoursContext(isOpen) {
+    if (isOpen) {
+      return '';
     }
-    if (this.business.website) {
-      section += `\n- Website: ${this.business.website}`;
-    }
-
-    return section;
+    return "Mention: 'We're currently closed, but I can still help you.'";
   }
 
   /**
-   * Services and pricing section
+   * Booking instructions based on calendar mode
+   */
+  getBookingInstructions(calendarMode, ownerFirstName) {
+    const modes = {
+      google: `BOOKING FLOW:
+- ALWAYS offer to book an appointment
+- Check availability and offer 2 specific time slots
+- Confirm the booking details
+- Tell them they'll get a text confirmation
+- If they decline booking: "No problem! What's the best number for a callback?"`,
+
+      jobber: `BOOKING FLOW:
+- Capture all details for a quote request
+- Tell them: "I'll pass this to ${ownerFirstName} and they'll get back to you within 24 hours"
+- Get their preferred callback times
+- DO NOT promise specific appointment times (${ownerFirstName} handles scheduling in Jobber)`,
+
+      lead_capture: `BOOKING FLOW:
+- Capture all lead details: service needed, address, preferred timing
+- Tell them: "I'll make sure ${ownerFirstName} gets this right away. They typically call back within a few hours."
+- Get best callback number and preferred times
+- Set expectations: ${ownerFirstName} handles all scheduling personally`
+    };
+
+    return modes[calendarMode] || modes.lead_capture;
+  }
+
+  /**
+   * Hours section for the prompt
+   */
+  getHoursSection() {
+    if (!this.hours) return '';
+
+    let section = 'HOURS:\n';
+    
+    Object.entries(this.hours).forEach(([day, hours]) => {
+      // Format to match Jon's style (8am - 6pm)
+      const formatted = hours.replace(/:00 /g, '').replace(/AM/g, 'am').replace(/PM/g, 'pm');
+      section += `- ${day.charAt(0).toUpperCase() + day.slice(1)}: ${formatted}\n`;
+    });
+
+    return section.trim();
+  }
+
+  /**
+   * Services section
    */
   getServicesSection() {
     if (!this.config.services || this.config.services.length === 0) {
       return '';
     }
 
-    let section = 'SERVICES WE OFFER:\n';
+    let section = 'SERVICES:\n';
     
     this.config.services.forEach(service => {
-      section += `- ${service.name}`;
-      if (service.description) {
-        section += `: ${service.description}`;
-      }
-      if (service.pricing) {
-        section += ` (${service.pricing})`;
-      }
-      section += '\n';
+      section += `- ${service.name}\n`;
     });
 
-    // Add pricing rules
-    if (this.config.pricing) {
-      section += '\nPRICING RULES:\n';
-      if (this.config.pricing.minimum) {
-        section += `- Minimum job size: ${this.config.pricing.minimum}\n`;
-      }
-      if (this.config.pricing.quote) {
-        section += `- ${this.config.pricing.quote}\n`;
-      }
+    return section.trim();
+  }
+
+  /**
+   * Pricing section
+   */
+  getPricingSection() {
+    if (!this.config.pricing) return '';
+
+    let section = 'PRICING:\n';
+    
+    // Add specific service pricing
+    if (this.config.pricing.mowing) {
+      section += `- Lawn mowing: ${this.config.pricing.mowing}\n`;
+    }
+    if (this.config.pricing.gutter) {
+      section += `- Gutter cleaning: ${this.config.pricing.gutter}\n`;
+    }
+    if (this.config.pricing.cleanup) {
+      section += `- Fall cleanup: ${this.config.pricing.cleanup}\n`;
+    }
+    if (this.config.pricing.snow) {
+      section += `- Snow removal: ${this.config.pricing.snow}\n`;
+    }
+    
+    if (this.config.pricing.minimum) {
+      section += `\nMinimum job size: ${this.config.pricing.minimum}\n`;
     }
 
     return section.trim();
   }
 
   /**
-   * Hours section with current status
+   * Service area section
    */
-  getHoursSection(timeOfDay) {
-    if (!this.hours) return '';
-
-    const now = new Date();
-    const dayName = now.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-    const todayHours = this.hours[dayName];
-    const isOpen = this.isBusinessOpen();
-
-    let section = 'BUSINESS HOURS:\n';
-    
-    Object.entries(this.hours).forEach(([day, hours]) => {
-      section += `- ${day.charAt(0).toUpperCase() + day.slice(1)}: ${hours}\n`;
-    });
-
-    section += `\nCURRENT STATUS: ${isOpen ? 'OPEN' : 'CLOSED'}\n`;
-    
-    if (!isOpen && todayHours && todayHours !== 'Closed') {
-      section += `Today's hours were: ${todayHours}\n`;
+  getServiceAreaSection() {
+    if (this.config.serviceArea) {
+      return `SERVICE AREA:\n- ${this.config.serviceArea.join(', ')}\n- Within 25km of these areas`;
     }
-
-    return section.trim();
-  }
-
-  /**
-   * Calendar/booking section based on mode
-   */
-  getCalendarSection(mode) {
-    const modes = {
-      google: `BOOKING APPOINTMENTS:
-We use Google Calendar for scheduling. 
-- Ask for: preferred date/time, service needed, name, phone, and address
-- Tell them you'll send a calendar invite to confirm
-- If they need to reschedule, they can call back or reply to the invite`,
-
-      jobber: `BOOKING APPOINTMENTS:
-We use Jobber for scheduling.
-- Collect: name, phone, email, service needed, preferred date/time, address
-- Tell them Jonathan will confirm the appointment within 24 hours
-- Mention they can also book online at ${this.business.website || 'our website'}`,
-
-      lead_capture: `BOOKING APPOINTMENTS (Lead Capture Mode):
-We take detailed messages for the owner to follow up.
-- Collect: name, phone number, address, service needed, preferred timing
-- Ask about: property size, specific issues, urgency
-- Tell them ${this.business.owner || 'the owner'} will call back within 24 hours to confirm
-- For urgent issues, offer to have them call back ASAP`
-    };
-
-    return modes[mode] || modes.lead_capture;
-  }
-
-  /**
-   * Conversation flow instructions
-   */
-  getConversationFlowSection() {
-    return `CONVERSATION FLOW:
-1. Greet warmly and identify the business
-2. Listen to what they need
-3. Answer questions using the info above
-4. If they want to book/quote: collect details systematically
-5. Confirm what you've captured
-6. Set expectations (callback time, confirmation method, etc.)
-7. End politely
-
-HANDLING SILENCE:
-- If the caller is silent for 3+ seconds, say: "I'm still here. Take your time."
-- If silent for 10+ seconds, ask: "Are you still there?"
-- If no response after that, say: "I'll hang up now, but feel free to call back anytime. Have a great day!" and end the call`;
-  }
-
-  /**
-   * Important rules section
-   */
-  getRulesSection() {
-    const rules = [
-      'Always mention minimum pricing if they ask about costs',
-      'Be honest about what we do and don\'t offer',
-      'Take detailed messages when the owner is unavailable',
-      'Confirm phone numbers by repeating them back',
-      'Ask about property size for landscaping quotes',
-      'End calls politely - thank them for calling'
-    ];
-
-    if (this.config.rules) {
-      rules.push(...this.config.rules);
+    if (this.business.location) {
+      return `SERVICE AREA:\n- ${this.business.location}\n- Within 25km`;
     }
-
-    return 'IMPORTANT RULES:\n' + rules.map(r => `- ${r}`).join('\n');
-  }
-
-  /**
-   * Get time of day classification
-   */
-  getCurrentTimeOfDay() {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'morning';
-    if (hour < 17) return 'afternoon';
-    return 'evening';
-  }
-
-  /**
-   * Get time-appropriate modifier for greeting
-   */
-  getTimeModifier(timeOfDay) {
-    const modifiers = {
-      morning: 'Good morning! ',
-      afternoon: 'Good afternoon! ',
-      evening: 'Good evening! '
-    };
-    return modifiers[timeOfDay] || '';
-  }
-
-  /**
-   * Default greetings if none configured
-   */
-  getDefaultGreetings(timeOfDay) {
-    const businessName = this.business.name;
-    const assistantName = this.assistant.name;
-    
-    return [
-      `Thanks for calling ${businessName}. This is ${assistantName}. How can I help you today?`,
-      `Hello! You've reached ${businessName}. I'm ${assistantName}. What can I do for you?`,
-      `${businessName}, this is ${assistantName} speaking. How may I assist you?`,
-      `Hi there! ${businessName}. ${assistantName} here. How can I help?`
-    ];
+    return '';
   }
 
   /**
@@ -282,6 +255,24 @@ HANDLING SILENCE:
     if (period.toUpperCase() === 'PM' && hour !== 12) return hour + 12;
     if (period.toUpperCase() === 'AM' && hour === 12) return 0;
     return hour;
+  }
+
+  /**
+   * Get time of day classification
+   */
+  getCurrentTimeOfDay() {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'morning';
+    if (hour < 17) return 'afternoon';
+    return 'evening';
+  }
+
+  /**
+   * Generate greeting for external use (email summaries, etc.)
+   * Note: The actual greeting the AI speaks comes from generateSystemPrompt()
+   */
+  generateGreeting() {
+    return this.selectGreeting(this.getCurrentTimeOfDay());
   }
 }
 

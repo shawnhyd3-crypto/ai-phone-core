@@ -14,10 +14,11 @@
   },
   "greetings": {
     "variations": [
-      "Hello! Thanks for calling Rake and Clover Landscaping. This is Sarah. How can I help you today?",
-      "Hi there! You've reached Rake and Clover Landscaping. Sarah speaking. What can I do for you?",
-      "Rake and Clover Landscaping, this is Sarah. How may I assist you?",
-      "Hey! Thanks for calling. Sarah at Rake and Clover. What's on your mind?"
+      "Thanks for calling Rake and Clover Landscaping! This is Sarah. How can I help?",
+      "Good morning! Rake and Clover Landscaping. I'm Sarah. What can I do for you?",
+      "Hi! You've reached Rake and Clover. This is Sarah. How can I help today?",
+      "Rake and Clover Landscaping, this is Sarah. What can I help you with?",
+      "Hey there! Sarah from Rake and Clover. What can I do for you today?"
     ]
   },
   "services": [
@@ -28,11 +29,13 @@
     },
     {
       "name": "Spring/Fall Cleanups",
-      "description": "Seasonal yard cleanup and debris removal"
+      "description": "Seasonal yard cleanup and debris removal",
+      "pricing": "Starting at $150 plus HST"
     },
     {
       "name": "Snow Removal",
-      "description": "Driveway and walkway snow clearing"
+      "description": "Driveway and walkway snow clearing",
+      "pricing": "Starting at $800 plus HST for the season"
     },
     {
       "name": "Mulching",
@@ -41,12 +44,20 @@
     {
       "name": "Garden Maintenance",
       "description": "Weeding, pruning, and general garden care"
+    },
+    {
+      "name": "Gutter Cleaning",
+      "description": "Debris removal and gutter flushing",
+      "pricing": "Starting at $150 plus HST"
     }
   ],
   "pricing": {
     "currency": "CAD",
-    "minimum": "$150",
-    "mowing": "$45+ per visit",
+    "minimum": "$150 plus HST",
+    "mowing": "Starting at $45 plus HST (seasonal pricing based on frequency and lawn size)",
+    "cleanup": "Starting at $150 plus HST",
+    "snow": "Starting at $800 plus HST for the season",
+    "gutter": "Starting at $150 plus HST",
     "quote": "Free estimates available"
   },
   "hours": {
@@ -58,13 +69,21 @@
     "saturday": "8:00 AM - 4:00 PM",
     "sunday": "Closed"
   },
+  "serviceArea": [
+    "Hamilton",
+    "Burlington",
+    "Oakville",
+    "Ancaster",
+    "Dundas"
+  ],
   "calendar": {
     "mode": "lead_capture",
     "note": "Options: google | jobber | lead_capture. lead_capture = take message for callback"
   },
   "rules": [
     "Always mention the $150 minimum for any job",
-    "Ask about property size and lawn condition for accurate quotes"
+    "Ask about property size and lawn condition for accurate quotes",
+    "Be trustworthy - customers are inviting us into their properties"
   ],
   "email": {
     "enabled": true,
