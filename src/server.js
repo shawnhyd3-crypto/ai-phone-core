@@ -158,6 +158,31 @@ async function startRecording(callSid, host) {
   }
 }
 
+// ============ CALL HANGUP ============
+
+async function hangupCall(callSid) {
+  try {
+    await axios.post(
+      `https://api.twilio.com/2010-04-01/Accounts/${process.env.TWILIO_ACCOUNT_SID}/Calls/${callSid}.json`,
+      new URLSearchParams({
+        'Status': 'completed'
+      }),
+      {
+        auth: {
+          username: process.env.TWILIO_ACCOUNT_SID,
+          password: process.env.TWILIO_AUTH_TOKEN
+        },
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      }
+    );
+    console.log(`✅ Call ${callSid} hung up`);
+  } catch (error) {
+    console.error('❌ Failed to hang up call:', error.response?.data || error.message);
+  }
+}
+
 // ============ MEDIA STREAM (OpenAI Realtime) ============
 
 app.ws('/media-stream', (ws) => {
@@ -194,10 +219,16 @@ app.ws('/media-stream', (ws) => {
           openAiWs.send(JSON.stringify({ type: 'response.create' }));
         }
         
-        setTimeout(() => {
+        setTimeout(async () => {
           if (openAiWs) openAiWs.close();
           ws.close();
-        }, 5000);
+          
+          // Explicitly hang up the Twilio call
+          if (callSid) {
+            console.log(`📞 Hanging up call ${callSid}`);
+            await hangupCall(callSid);
+          }
+        }, 3000);
         
         clearInterval(silenceCheckInterval);
       }
