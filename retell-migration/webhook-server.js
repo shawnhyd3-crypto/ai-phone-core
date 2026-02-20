@@ -1,0 +1,285 @@
+/**
+ * Retell AI Webhook Server for Rake & Clover Landscaping
+ * Handles incoming webhooks from Retell for call events
+ * Sends email notifications with lead information
+ */
+
+const express = require('express');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
+require('dotenv').config();
+
+const app = express();
+app.use(express.json());
+app.use(express.raw({ type: 'application/json' }));
+
+// Configuration
+const PORT = process.env.PORT || 3000;
+const RETELL_WEBHOOK_SECRET = process.env.RETELL_WEBHOOK_SECRET;
+
+// Email configuration
+const emailTransporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: process.env.SMTP_PORT || 587,
+  secure: false,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS
+  }
+});
+
+// Store active calls (in production, use Redis or database)
+const activeCalls = new Map();
+const completedCalls = new Map();
+
+/**
+ * Verify Retell webhook signature
+ * Retell signs webhooks with HMAC-SHA256
+ */
+function verifyWebhookSignature(payload, signature) {
+  if (!RETELL_WEBHOOK_SECRET || !signature) {
+    console.warn('Webhook secret or signature missing, skipping verification');
+    return true;
+  }
+  
+  const expectedSignature = crypto
+    .createHmac('sha256', RETELL_WEBHOOK_SECRET)
+    .update(payload)
+    .digest('hex');
+  
+  return crypto.timingSafeEqual(
+    Buffer.from(signature),
+    Buffer.from(expectedSignature)
+  );
+}
+
+/**
+ * Send email notification for new lead
+ */
+async function sendLeadEmail(callData, analysis) {
+  const transcript = callData.transcript?.map(t => 
+    `${t.role === 'agent' ? 'Sarah' : 'Caller'}: ${t.content}`
+  ).join('\n\n') || 'Transcript not available';
+
+  const recordingUrl = callData.recording_url || 'Not available';
+  
+  // Extract lead data if capture_lead was called
+  const leadData = callData.tool_calls?.find(t => t.name === 'capture_lead')?.parameters;
+  
+  const subject = leadData 
+    ? `🌿 New Landscaping Lead: ${leadData.name} - ${leadData.service}`
+    : `🌿 Call Completed - Lead Capture Status: ${analysis?.lead_captured ? 'Complete' : 'Incomplete'}`;
+
+  const htmlBody = `
+    <h2>🌿 Rake & Clover Landscaping - New Call Summary</h2>
+    
+    <h3>Call Details</h3>
+    <table border="0" cellpadding="5" style="border-collapse: collapse;">
+      <tr><td><strong>Call ID:</strong></td><td>${callData.call_id}</td></tr>
+      <tr><td><strong>From:</strong></td><td>${callData.from_number}</td></tr>
+      <tr><td><strong>Duration:</strong></td><td>${Math.round(callData.duration_ms / 1000)} seconds</td></tr>
+      <tr><td><strong>Start Time:</strong></td><td>${new Date(callData.start_timestamp).toLocaleString('en-CA', { timeZone: 'America/Toronto' })}</td></tr>
+      <tr><td><strong>End Reason:</strong></td><td>${callData.disconnection_reason || 'Unknown'}</td></tr>
+    </table>
+
+    ${leadData ? `
+    <h3>📋 Lead Information</h3>
+    <table border="0" cellpadding="5" style="border-collapse: collapse; background: #f5f5f5; padding: 15px;">
+      <tr><td><strong>Name:</strong></td><td>${leadData.name}</td></tr>
+      <tr><td><strong>Phone:</strong></td><td>${leadData.phone}</td></tr>
+      <tr><td><strong>Address:</strong></td><td>${leadData.address}</td></tr>
+      <tr><td><strong>Service:</strong></td><td>${leadData.service.replace(/_/g, ' ').toUpperCase()}</td></tr>
+      ${leadData.timing ? `<tr><td><strong>Timing:</strong></td><td>${leadData.timing}</td></tr>` : ''}
+      ${leadData.details ? `<tr><td><strong>Details:</strong></td><td>${leadData.details}</td></tr>` : ''}
+    </table>
+    ` : '<p style="color: orange;">⚠️ Lead information was not fully captured during this call.</p>'}
+
+    ${analysis ? `
+    <h3>📊 Call Analysis</h3>
+    <table border="0" cellpadding="5">
+      <tr><td><strong>Lead Captured:</strong></td><td>${analysis.lead_captured ? '✅ Yes' : '❌ No'}</td></tr>
+      ${analysis.service_requested ? `<tr><td><strong>Service:</strong></td><td>${analysis.service_requested}</td></tr>` : ''}
+      ${analysis.urgency ? `<tr><td><strong>Urgency:</strong></td><td>${analysis.urgency}</td></tr>` : ''}
+      ${analysis.sentiment ? `<tr><td><strong>Sentiment:</strong></td><td>${analysis.sentiment}</td></tr>` : ''}
+      ${analysis.follow_up_required ? `<tr><td><strong>Priority Follow-up:</strong></td><td>🚨 YES</td></tr>` : ''}
+      ${analysis.notes ? `<tr><td><strong>Notes:</strong></td><td>${analysis.notes}</td></tr>` : ''}
+    </table>
+    ` : ''}
+
+    <h3>🎙️ Recording</h3>
+    <p><a href="${recordingUrl}" style="color: #2e7d32; font-weight: bold;">Listen to Call Recording</a></p>
+
+    <h3>📝 Full Transcript</h3>
+    <pre style="background: #f9f9f9; padding: 15px; border-left: 4px solid #2e7d32; overflow-x: auto;">${transcript}</pre>
+
+    <hr>
+    <p style="font-size: 12px; color: #666;">
+      This email was automatically generated by Sarah, the Rake & Clover Landscaping AI assistant.<br>
+      Call ID: ${callData.call_id} | Agent: ${callData.agent_id}
+    </p>
+  `;
+
+  const textBody = `
+RAKE & CLOVER LANDSCAPING - NEW CALL SUMMARY
+=============================================
+
+Call Details:
+- From: ${callData.from_number}
+- Duration: ${Math.round(callData.duration_ms / 1000)} seconds
+- Start: ${new Date(callData.start_timestamp).toLocaleString('en-CA', { timeZone: 'America/Toronto' })}
+
+${leadData ? `LEAD INFORMATION:
+Name: ${leadData.name}
+Phone: ${leadData.phone}
+Address: ${leadData.address}
+Service: ${leadData.service}
+${leadData.timing ? `Timing: ${leadData.timing}` : ''}
+${leadData.details ? `Details: ${leadData.details}` : ''}
+` : 'Lead information was not fully captured.'}
+
+Recording: ${recordingUrl}
+
+---
+This email was sent automatically by the Retell AI webhook handler.
+  `;
+
+  const mailOptions = {
+    from: '"Sarah - Rake & Clover" <sarah@rakeandclover.ca>',
+    to: 'shawn.hyde@hydetech.ca',
+    bcc: 'rake.clover.landscaping@gmail.com',
+    subject: subject,
+    text: textBody,
+    html: htmlBody
+  };
+
+  try {
+    await emailTransporter.sendMail(mailOptions);
+    console.log(`✅ Email sent for call ${callData.call_id}`);
+  } catch (error) {
+    console.error(`❌ Failed to send email for call ${callData.call_id}:`, error);
+  }
+}
+
+/**
+ * Webhook endpoint - handles all Retell events
+ */
+app.post('/webhooks/retell', async (req, res) => {
+  const payload = req.body;
+  const signature = req.headers['x-retell-signature'];
+  
+  console.log('📥 Received webhook:', {
+    event: payload.event,
+    callId: payload.call?.call_id,
+    timestamp: new Date().toISOString()
+  });
+
+  // Verify signature if secret is configured
+  if (RETELL_WEBHOOK_SECRET && !verifyWebhookSignature(JSON.stringify(payload), signature)) {
+    console.error('❌ Invalid webhook signature');
+    return res.status(401).json({ error: 'Invalid signature' });
+  }
+
+  const eventType = payload.event;
+  const callData = payload.call;
+
+  try {
+    switch (eventType) {
+      case 'call_started':
+        console.log(`📞 Call started: ${callData.call_id} from ${callData.from_number}`);
+        activeCalls.set(callData.call_id, {
+          startTime: Date.now(),
+          fromNumber: callData.from_number,
+          toNumber: callData.to_number
+        });
+        break;
+
+      case 'transcript_updated':
+        // Store transcript updates for real-time monitoring (optional)
+        if (activeCalls.has(callData.call_id)) {
+          activeCalls.get(callData.call_id).transcript = payload.transcript_with_tool_calls;
+        }
+        break;
+
+      case 'call_ended':
+        console.log(`📴 Call ended: ${callData.call_id}`);
+        const callInfo = activeCalls.get(callData.call_id) || {};
+        completedCalls.set(callData.call_id, {
+          ...callInfo,
+          endTime: Date.now(),
+          duration: callData.duration_ms,
+          recordingUrl: callData.recording_url
+        });
+        activeCalls.delete(callData.call_id);
+        break;
+
+      case 'call_analyzed':
+        console.log(`📊 Call analyzed: ${callData.call_id}`);
+        const analysis = callData.call_analysis;
+        
+        // Send email notification with full analysis
+        await sendLeadEmail(callData, analysis);
+        
+        // Store in completed calls
+        if (completedCalls.has(callData.call_id)) {
+          completedCalls.get(callData.call_id).analysis = analysis;
+        }
+        break;
+
+      default:
+        console.log(`ℹ️ Unhandled event type: ${eventType}`);
+    }
+
+    res.status(200).json({ received: true });
+  } catch (error) {
+    console.error('❌ Error processing webhook:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * Health check endpoint
+ */
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    activeCalls: activeCalls.size,
+    completedCalls: completedCalls.size
+  });
+});
+
+/**
+ * API endpoint to get call data (for internal use)
+ */
+app.get('/api/calls/:callId', (req, res) => {
+  const callId = req.params.callId;
+  const callData = completedCalls.get(callId) || activeCalls.get(callId);
+  
+  if (!callData) {
+    return res.status(404).json({ error: 'Call not found' });
+  }
+  
+  res.json(callData);
+});
+
+/**
+ * API endpoint to list recent calls
+ */
+app.get('/api/calls', (req, res) => {
+  const limit = parseInt(req.query.limit) || 50;
+  const calls = Array.from(completedCalls.entries())
+    .sort((a, b) => b[1].endTime - a[1].endTime)
+    .slice(0, limit)
+    .map(([id, data]) => ({ callId: id, ...data }));
+  
+  res.json({ calls, total: completedCalls.size });
+});
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`🚀 Retell webhook server running on port ${PORT}`);
+  console.log(`📍 Webhook URL: http://your-domain.com/webhooks/retell`);
+  console.log(`💡 Health check: http://your-domain.com/health`);
+});
+
+module.exports = app;

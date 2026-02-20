@@ -1,0 +1,21 @@
+{
+  "name": "retell-sarah-automation",
+  "version": "1.0.0",
+  "description": "Retell AI automation script for Sarah - Rake & Clover Landscaping",
+  "main": "setup.js",
+  "scripts": {
+    "setup": "node setup.js",
+    "webhook": "node webhook-server.js",
+    "test": "node test-call.js"
+  },
+  "dependencies": {
+    "axios": "^1.13.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.1",
+    "ngrok": "^4.3.3",
+    "nodemailer": "^6.10.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

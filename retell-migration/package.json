@@ -1,0 +1,35 @@
+{
+  "name": "rake-clover-retell-integration",
+  "version": "1.0.0",
+  "description": "Retell AI webhook handler and Twilio integration for Rake & Clover Landscaping",
+  "main": "webhook-server.js",
+  "scripts": {
+    "start": "node webhook-server.js",
+    "dev": "nodemon webhook-server.js",
+    "test": "node test-webhook.js",
+    "configure-twilio": "node twilio-integration.js configure",
+    "reconcile": "node twilio-integration.js reconcile"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "nodemailer": "^6.9.7",
+    "dotenv": "^16.3.1",
+    "twilio": "^4.19.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "retell",
+    "ai",
+    "voice",
+    "twilio",
+    "landscaping",
+    "webhook"
+  ],
+  "author": "Rake & Clover Landscaping",
+  "license": "MIT"
+}
