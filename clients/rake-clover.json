@@ -14,11 +14,11 @@
   },
   "greetings": {
     "variations": [
-      "Hey! Thanks for calling. This is Sarah.",
-      "Hi there! Sarah here.",
-      "Hey! You've reached Rake and Clover. It's Sarah.",
-      "Hi! This is Sarah.",
-      "Hey there! Sarah speaking."
+      "Hi, thanks for calling Rake and Clover. This is Sarah.",
+      "Hello, you've reached Rake and Clover. Sarah speaking.",
+      "Hi there, this is Sarah at Rake and Clover.",
+      "Thanks for calling, this is Sarah.",
+      "Hello, Sarah here at Rake and Clover."
     ]
   },
   "services": [
