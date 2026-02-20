@@ -68,7 +68,7 @@
   ],
   "email": {
     "enabled": true,
-    "to": "shawn@hydetech.ca",
+    "to": "shawn.hyde@hydetech.ca",
     "bcc": "rake.clover.landscaping@gmail.com",
     "summarySubject": "[DEV TEST] New Call Summary - Rake and Clover",
     "voicemailSubject": "[DEV TEST] New Voicemail - Rake and Clover"
