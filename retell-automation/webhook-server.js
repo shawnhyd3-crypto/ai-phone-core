@@ -53,7 +53,53 @@ if (EMAIL_USER && EMAIL_PASS) {
 
 // Middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.raw({ type: 'application/json' }));
+
+// Twilio → Retell Integration
+const RETELL_AGENT_ID = process.env.RETELL_AGENT_ID || 'agent_af0d2e3876b2cbfc55fa668178';
+
+/**
+ * Generate TwiML to connect call to Retell AI
+ */
+function generateRetellTwiML() {
+  const retellWebhookUrl = `https://api.retellai.com/v1/twilio-webhook/${RETELL_AGENT_ID}`;
+  
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Connect>
+    <Stream url="${retellWebhookUrl}">
+      <Parameter name="retell_agent_id" value="${RETELL_AGENT_ID}" />
+    </Stream>
+  </Connect>
+</Response>`;
+}
+
+// Handle incoming calls from Twilio
+app.post('/twilio/incoming', (req, res) => {
+  const from = req.body.From;
+  const to = req.body.To;
+  const callSid = req.body.CallSid;
+  
+  console.log(`\n📞 Incoming Twilio Call`);
+  console.log(`   From: ${from}`);
+  console.log(`   To: ${to}`);
+  console.log(`   Call SID: ${callSid}`);
+  console.log(`   Connecting to Retell Agent: ${RETELL_AGENT_ID}`);
+  
+  const twiml = generateRetellTwiML();
+  res.type('text/xml');
+  res.send(twiml);
+});
+
+// Handle Twilio call status updates
+app.post('/twilio/status', (req, res) => {
+  console.log(`\n📊 Call Status Update`);
+  console.log(`   Call SID: ${req.body.CallSid}`);
+  console.log(`   Status: ${req.body.CallStatus}`);
+  console.log(`   Duration: ${req.body.CallDuration || 'N/A'}`);
+  res.sendStatus(200);
+});
 
 // Store for call data (in production, use a database)
 const callStore = new Map();
