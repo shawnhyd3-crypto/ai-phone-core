@@ -595,14 +595,32 @@ async function generateSummary(transcript) {
 
 async function sendEmail({ config, callSid, fromNumber, duration, transcript, summary, attachments, timestamp }) {
   const audioBuffer = await fs.readFile(attachments.audio);
-  
+
   const { intent, category } = extractIntentAndCategory(transcript);
   const callerName = extractName(transcript, config.assistant.name);
   const subject = `${category}: ${intent} - ${timestamp.toLocaleDateString()}`;
-  
+
   const formattedDuration = formatDuration(duration);
   const callerNumber = formatPhoneNumber(fromNumber);
+
+  // Build descriptive filename: YYYY-MM-DD_HHMM_ClientName_PhoneNumber.mp3
+  const dateStr = timestamp.toLocaleDateString('en-CA'); // YYYY-MM-DD format
+  const timeStr = timestamp.toLocaleTimeString('en-US', { 
+    hour12: false, 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  }).replace(':', ''); // HHMM format
   
+  // Sanitize client name for filename
+  const clientName = config.business.name
+    .replace(/[^a-zA-Z0-9\s]/g, '') // Remove special chars
+    .replace(/\s+/g, '-'); // Spaces to hyphens
+  
+  // Sanitize phone number for filename
+  const phoneForFilename = callerNumber.replace(/\D/g, '');
+  
+  const filename = `${dateStr}_${timeStr}_${clientName}_${phoneForFilename}.mp3`;
+
   const emailData = {
     personalizations: [{
       to: [{ email: config.email.to }],
@@ -643,7 +661,7 @@ async function sendEmail({ config, callSid, fromNumber, duration, transcript, su
     ],
     attachments: [
       {
-        filename: `call-recording-${timestamp.getTime()}.mp3`,
+        filename: filename,
         content: audioBuffer.toString('base64'),
         type: 'audio/mpeg',
         disposition: 'attachment'
