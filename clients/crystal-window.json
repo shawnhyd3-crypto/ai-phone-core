@@ -9,14 +9,15 @@
   "assistant": {
     "name": "Crystal",
     "personality": "Friendly, professional, detail-oriented, trustworthy",
-    "voice": "alloy"
+    "voice": "marin"
   },
   "greetings": {
     "variations": [
-      "Hello! Thanks for calling Crystal Window and Gutter Cleaning. This is Crystal. How can I help you today?",
-      "Hi there! You've reached Crystal Window and Gutter Cleaning. Crystal speaking. What can I do for you?",
-      "Crystal Window and Gutter Cleaning, this is Crystal. How may I assist you?",
-      "Hey! Thanks for calling. Crystal here. What's on your mind?"
+      "Thanks for calling Crystal Window and Gutter Cleaning! This is Crystal. How can I help?",
+      "Good morning! Crystal Window and Gutter Cleaning. I'm Crystal. What can I do for you?",
+      "Hi! You've reached Crystal Window and Gutter. This is Crystal. How can I help today?",
+      "Crystal Window and Gutter Cleaning, this is Crystal. What can I help you with?",
+      "Hey there! Crystal from Window and Gutter Cleaning. What can I do for you today?"
     ]
   },
   "services": [
@@ -59,6 +60,12 @@
     "saturday": "9:00 AM - 3:00 PM",
     "sunday": "Closed"
   },
+  "serviceArea": [
+    "Hamilton",
+    "Niagara Falls",
+    "St. Catharines",
+    "Welland"
+  ],
   "calendar": {
     "mode": "lead_capture",
     "note": "Update to 'google' or 'jobber' when integrated"

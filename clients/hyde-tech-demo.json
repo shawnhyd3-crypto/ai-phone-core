@@ -2,7 +2,7 @@
   "business": {
     "name": "Hyde Tech Solutions",
     "owner": "Shawn Hyde",
-    "email": "shawn@hydetech.ca",
+    "email": "shawn.hyde@hydetech.ca",
     "phone": "+1-365-606-5613",
     "website": "https://hydetech.ca",
     "location": "Hamilton, Ontario"
@@ -10,14 +10,15 @@
   "assistant": {
     "name": "Floyd",
     "personality": "Professional, tech-savvy, helpful, modern",
-    "voice": "alloy"
+    "voice": "marin"
   },
   "greetings": {
     "variations": [
-      "Hello! You've reached Hyde Tech. I'm Floyd, the AI assistant. How can I help you today?",
-      "Hi there! Hyde Tech Solutions. Floyd speaking. What brings you our way?",
-      "Hyde Tech, this is Floyd. How may I assist you today?",
-      "Hey! Thanks for calling Hyde Tech. Floyd here. What can I do for you?"
+      "Thanks for calling Hyde Tech! This is Floyd. How can I help?",
+      "Good morning! Hyde Tech Solutions. I'm Floyd. What can I do for you?",
+      "Hi! You've reached Hyde Tech. This is Floyd. How can I help today?",
+      "Hyde Tech Solutions, this is Floyd. What can I help you with?",
+      "Hey there! Floyd from Hyde Tech. What can I do for you today?"
     ]
   },
   "services": [
@@ -57,6 +58,12 @@
     "saturday": "By appointment",
     "sunday": "Closed"
   },
+  "serviceArea": [
+    "Hamilton",
+    "Burlington",
+    "Oakville",
+    "GTA"
+  ],
   "calendar": {
     "mode": "lead_capture"
   },
@@ -68,7 +75,7 @@
   ],
   "email": {
     "enabled": true,
-    "to": "shawn@hydetech.ca",
+    "to": "shawn.hyde@hydetech.ca",
     "summarySubject": "New Call Summary - Hyde Tech",
     "voicemailSubject": "New Voicemail - Hyde Tech"
   },
