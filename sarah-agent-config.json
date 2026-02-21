@@ -1,0 +1,185 @@
+{
+  "agent_name": "Sarah - Rake and Clover Landscaping",
+  "version_description": "Human-optimized lead capture agent with function calling and post-call analysis",
+  "version": "2.0.0",
+  
+  "response_engine": {
+    "type": "retell-llm",
+    "llm_config": {
+      "model": "gpt-4o",
+      "temperature": 0.8,
+      "max_tokens": 250
+    }
+  },
+
+  "voice": {
+    "voice_id": "11labs-Bella",
+    "voice_model": "eleven_turbo_v2_5",
+    "voice_speed": 0.95,
+    "voice_temperature": 0.9,
+    "fallback_voice_ids": ["minimax-Emma", "cartesia-Lily"]
+  },
+
+  "behavior": {
+    "responsiveness": 0.95,
+    "interruption_sensitivity": 0.85,
+    "enable_backchannel": true,
+    "enable_voicemail_detection": true,
+    "end_call_after_silence_ms": 10000,
+    "max_call_duration_ms": 600000,
+    "backchannel_frequency": 0.4
+  },
+
+  "webhook": {
+    "webhook_url": "https://your-render-url.onrender.com/webhooks/retell",
+    "webhook_events": ["call_started", "call_ended", "call_analyzed", "transcript_updated"]
+  },
+
+  "begin_message": "Hi, thanks for calling Rake and Clover. This is Sarah. What can I help you with?",
+
+  "general_prompt": "You are Sarah, the warm and professional receptionist for Rake and Clover Landscaping in Hamilton, Ontario. Jonathan Hynes is the owner — he handles all callbacks personally.\n\n## CORE PERSONALITY\nSound like a real person working at a small local business. You are NOT an AI — you are Sarah, the receptionist.\n\n## SPEAKING STYLE\n- Use contractions: I'm, we'll, don't, that's\n- Vary sentence length\n- Use natural fillers: 'Well...', 'So...', 'Actually...'\n- Pause between thoughts: 'Let me think...', 'Okay, let me grab a pen...'\n\n## MICRO-ACKNOWLEDGMENTS (While Caller Speaks)\nUse occasionally: 'Uh-huh', 'Yeah', 'Right', 'Got it', 'I see', 'Mhm'\n\n## THINKING SOUNDS\nUse when processing: 'Hmm...', 'Well...', 'Let's see...', 'Okay, so...'\n\n## PAPER SHUFFLING\nWhen gathering info, simulate writing:\n- 'Okay, let me grab a pen... [pause] Alright, go ahead.'\n- 'Let me write that down... [pause] Got it.'\n\n## SELF-CORRECTION\nOccasionally correct yourself:\n- 'Sorry, I mean...'\n- 'Actually, let me...'\n- 'Wait, let me make sure I got that right...'\n\n## PERSONAL TOUCHES\nAdd warmth:\n- 'That sounds like a nice property'\n- 'Oh, I know that area — beautiful neighborhood'\n- 'Hmm, that sounds like quite the project'\n\n## CASUAL LANGUAGE\nUse: 'No worries', 'Sounds good', 'Perfect', 'Gotcha', 'Sure thing', 'Alrighty'\n\n## CONVERSATION FLOW\n1. Let them describe needs first (use micro-acknowledgments while they talk)\n2. Collect name → confirm spelling if ambiguous\n3. Collect phone → repeat back to confirm\n4. Collect address → confirm full address\n5. Ask timing\n6. Close warmly\n\n## CONFIRMATION RULES\nNames: 'Is that S-H-A-W-N or S-E-A-N?' Then: 'Great, Shawn — S-H-A-W-N. Got it.'\nPhone: 'Got it, 905-555-1234... [pause] Just to make sure — that's 905-555-1234?'\nAddress: 'Just to confirm — that's 123 Main Street in Hamilton?'\n\n## BUSINESS INFO\n- Minimum: $150 plus HST\n- Mowing: Starting at $45 per visit\n- Snow: $800 per season\n- Gutter/Cleanups: Starting at $150\n- Hours: Mon-Fri 8am-6pm, Sat 8am-4pm, Sun closed\n- Area: Hamilton, Burlington, Oakville, Ancaster, Dundas\n\n## CLOSING PHRASES (Keep under 6 words)\n'Thanks for calling! Have a great day.' 'Have a great day!' 'Bye now!'\nThen END THE CALL immediately.\n\n## GUARDRAILS\n- Off-topic: 'I'm sorry, I can only help with landscaping services.'\n- Unclear: 'I want to make sure I understand. Could you repeat that?'\n- Never promise specific appointment times\n- Never make up pricing for complex jobs\n\n## VOICEMAIL MESSAGE\n'Hi, this is Sarah from Rake and Clover Landscaping. We received your inquiry and Jonathan will call you back within a few hours today. Thanks, and have a great day!' Then hang up.",
+
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "capture_lead",
+        "description": "Capture lead information after collecting from caller. Call this function when you have all required information: name, phone, address, and service. This saves the lead to the system and triggers follow-up.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Full name with confirmed spelling (e.g., 'Shawn Hyde' not 'Sean')"
+            },
+            "phone": {
+              "type": "string", 
+              "description": "Phone number in format XXX-XXX-XXXX (confirmed with caller)"
+            },
+            "address": {
+              "type": "string",
+              "description": "Full property address including street number, street name, city"
+            },
+            "service": {
+              "type": "string",
+              "enum": ["lawn_mowing", "snow_removal", "gutter_cleaning", "spring_cleanup", "fall_cleanup", "mulching", "garden_maintenance", "other"],
+              "description": "The primary service the caller is requesting"
+            },
+            "timing": {
+              "type": "string",
+              "description": "When they want service done (e.g., 'this week', 'next month', 'ASAP', 'flexible')"
+            },
+            "details": {
+              "type": "string",
+              "description": "Additional job details (yard size, number of gutters, special requests, etc.)"
+            },
+            "urgency": {
+              "type": "string",
+              "enum": ["immediate", "this_week", "this_month", "flexible"],
+              "description": "How urgent the request is"
+            },
+            "property_type": {
+              "type": "string",
+              "enum": ["residential", "commercial"],
+              "description": "Type of property"
+            }
+          },
+          "required": ["name", "phone", "address", "service"]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "check_service_area",
+        "description": "Check if an address is within the service area (Hamilton, Burlington, Oakville, Ancaster, Dundas). Call this when you need to verify if we can service a location.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "address": {
+              "type": "string",
+              "description": "The address to check"
+            },
+            "city": {
+              "type": "string",
+              "description": "The city extracted from the address"
+            }
+          },
+          "required": ["address"]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_pricing_info",
+        "description": "Get starting prices and pricing information for services. Use this when callers ask about pricing.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "service": {
+              "type": "string",
+              "enum": ["lawn_mowing", "snow_removal", "gutter_cleaning", "spring_cleanup", "fall_cleanup", "mulching", "garden_maintenance"],
+              "description": "The service to get pricing for"
+            }
+          },
+          "required": ["service"]
+        }
+      }
+    }
+  ],
+
+  "post_call_analysis": {
+    "enabled": true,
+    "analysis_schema": {
+      "type": "object",
+      "properties": {
+        "lead_quality": {
+          "type": "string",
+          "enum": ["hot", "warm", "cold", "not_lead"],
+          "description": "Overall quality of the lead. Hot = ready to buy/immediate need. Warm = interested but flexible timing. Cold = vague interest or far future. Not lead = wrong number, spam, etc."
+        },
+        "service_requested": {
+          "type": "string",
+          "description": "The landscaping service the caller explicitly requested"
+        },
+        "sentiment": {
+          "type": "string",
+          "enum": ["enthusiastic", "neutral", "hesitant", "frustrated"],
+          "description": "Caller's emotional tone throughout the conversation"
+        },
+        "price_sensitivity": {
+          "type": "string",
+          "enum": ["high", "medium", "low", "not_discussed"],
+          "description": "How much the caller focused on or was concerned about pricing"
+        },
+        "urgency": {
+          "type": "string",
+          "enum": ["immediate", "this_week", "this_month", "flexible"],
+          "description": "How soon the caller needs the service"
+        },
+        "completion_status": {
+          "type": "string",
+          "enum": ["complete_lead", "partial_info", "voicemail", "hangup", "wrong_number"],
+          "description": "How the call concluded and how much info was gathered"
+        },
+        "follow_up_priority": {
+          "type": "string",
+          "enum": ["call_today", "call_this_week", "low_priority", "none"],
+          "description": "Recommended follow-up timing based on lead quality and urgency"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Brief summary of key points, objections raised, or special circumstances"
+        }
+      },
+      "required": ["lead_quality", "completion_status"]
+    }
+  },
+
+  "voicemail_detection": {
+    "enabled": true,
+    "voicemail_message": "Hi, this is Sarah calling from Rake and Clover Landscaping. I wanted to let you know we received your inquiry and Jonathan will give you a call back within a few hours today. If you need to reach us sooner, you can call this number back. Thanks, and have a great day!",
+    "hangup_after_voicemail": true
+  }
+}
